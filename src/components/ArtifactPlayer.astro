@@ -1,0 +1,129 @@
+---
+interface Props {
+  title: string;
+  src: string;
+  compressed?: boolean;
+}
+
+const { title, src, compressed = false } = Astro.props;
+---
+
+<artifact-player data-src={src} data-compressed={String(compressed)}>
+  <div class="player-shell">
+    <div class="player-bar">
+      <span class="player-title">{title}</span>
+      <div class="player-actions">
+        <button class="player-action load-action" type="button">Load</button>
+        <a class="player-action open-action" href={compressed ? undefined : src} target="_blank" rel="noreferrer">
+          Full screen
+        </a>
+      </div>
+    </div>
+    <div class="player-stage">
+      <iframe
+        title={title}
+        src={compressed ? undefined : src}
+        loading="lazy"
+        sandbox="allow-scripts allow-downloads allow-pointer-lock"
+        referrerpolicy="no-referrer"
+        allowfullscreen
+      ></iframe>
+      <div class="player-status" role="status">Ready to load this browser-isolated artifact.</div>
+    </div>
+  </div>
+</artifact-player>
+
+<script>
+  class DesArtifactPlayer extends HTMLElement {
+    private blobUrl?: string;
+    private loading = false;
+
+    connectedCallback() {
+      const button = this.querySelector<HTMLButtonElement>('.load-action');
+      const frame = this.querySelector<HTMLIFrameElement>('iframe');
+      const compressed = this.dataset.compressed === 'true';
+
+      button?.addEventListener('click', () => this.loadArtifact(true));
+      frame?.addEventListener('load', () => this.markReady());
+
+      if (!compressed && frame?.src) {
+        button?.setAttribute('hidden', '');
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) {
+            observer.disconnect();
+            this.loadArtifact(false);
+          }
+        },
+        { rootMargin: '280px' },
+      );
+      observer.observe(this);
+    }
+
+    disconnectedCallback() {
+      if (this.blobUrl) URL.revokeObjectURL(this.blobUrl);
+    }
+
+    private markReady() {
+      const status = this.querySelector<HTMLElement>('.player-status');
+      const button = this.querySelector<HTMLButtonElement>('.load-action');
+      if (status) status.hidden = true;
+      if (button) button.textContent = 'Reload';
+      this.loading = false;
+    }
+
+    private setStatus(message: string) {
+      const status = this.querySelector<HTMLElement>('.player-status');
+      if (!status) return;
+      status.hidden = false;
+      status.textContent = message;
+    }
+
+    private async loadArtifact(force: boolean) {
+      const frame = this.querySelector<HTMLIFrameElement>('iframe');
+      const source = this.dataset.src;
+      const compressed = this.dataset.compressed === 'true';
+      if (!frame || !source || this.loading) return;
+
+      if (!compressed) {
+        if (force || !frame.getAttribute('src')) frame.src = source;
+        return;
+      }
+
+      if (this.blobUrl && !force) return;
+      if (!('DecompressionStream' in window)) {
+        this.setStatus('This browser cannot decompress the embedded artifact. Try a current browser.');
+        return;
+      }
+
+      this.loading = true;
+      this.setStatus('Loading and decompressing the simulation…');
+
+      try {
+        const response = await fetch(source, { credentials: 'omit' });
+        if (!response.ok || !response.body) throw new Error(`HTTP ${response.status}`);
+
+        const encodedByServer = response.headers.get('content-encoding')?.includes('gzip');
+        const html = encodedByServer
+          ? await response.text()
+          : await new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).text();
+        if (this.blobUrl) URL.revokeObjectURL(this.blobUrl);
+        this.blobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+        frame.srcdoc = html;
+
+        const open = this.querySelector<HTMLAnchorElement>('.open-action');
+        if (open) open.href = this.blobUrl;
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : 'unknown error';
+        this.setStatus(`The artifact could not be loaded (${detail}).`);
+        this.loading = false;
+      }
+    }
+  }
+
+  if (!customElements.get('artifact-player')) {
+    customElements.define('artifact-player', DesArtifactPlayer);
+  }
+</script>

@@ -1,0 +1,113 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const repositories = [
+  {
+    name: 'discrete-event-system.rs',
+    label: 'Rust engine',
+    href: 'https://github.com/ORESoftware/discrete-event-system.rs',
+    description: 'The current simulation, optimization, and self-contained artifact engine.',
+  },
+  {
+    name: 'des-web.rs',
+    label: 'MASH server',
+    href: 'https://github.com/discrete-event-systems/des-web.rs',
+    description: 'Axum, Maud, SeaORM, Supabase, and htmx for live DES-backed applications.',
+  },
+  {
+    name: 'des-mcp-server.rs',
+    label: 'MCP server',
+    href: 'https://github.com/discrete-event-systems/des-mcp-server.rs',
+    description: 'Read-only and build-only tools for models, CI, telemetry, and readiness.',
+  },
+  {
+    name: 'discrete-event-systems.github.io',
+    label: 'Astro site',
+    href: 'https://github.com/discrete-event-systems/discrete-event-systems.github.io',
+    description: 'The audited, static showcase you are viewing now.',
+  },
+];
+---
+
+<BaseLayout
+  title="Discrete Event Systems"
+  description="Explore discrete-event simulations, optimization artifacts, and browser-based games from the Discrete Event Systems project."
+>
+  <section class="hero">
+    <div class="hero-grid shell">
+      <div>
+        <p class="eyebrow">Open simulation laboratory</p>
+        <h1>Systems move in <span class="accent">events.</span></h1>
+        <p class="lede">
+          Model queues, factories, elevators, tactics, and decisions. Every showcase here is a
+          self-contained artifact produced by the DES engines and isolated in your browser.
+        </p>
+        <div class="button-row">
+          <a class="button primary" href="/simulations/">Explore simulations →</a>
+          <a class="button" href="/games/">Open the game labs</a>
+        </div>
+      </div>
+      <aside class="hero-note" aria-label="Site status">
+        <div class="signal"><span class="signal-dot"></span>Static and ready</div>
+        <p>
+          Built with <code>Astro</code>, deployed by GitHub Actions, and served over GitHub Pages.
+          No login, telemetry, cookies, or remote runtime is required.
+        </p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Choose a mode</p>
+          <h2>Observe or intervene.</h2>
+        </div>
+        <p>
+          Simulations expose system behavior over time. Game labs put parameters and decisions in
+          your hands.
+        </p>
+      </div>
+      <div class="cards">
+        <a class="card" href="/simulations/">
+          <span class="card-number">01 / simulations</span>
+          <div>
+            <h3>Watch the system.</h3>
+            <p>Elevator dispatch, warehouse flow, and occupancy rendered from real DES runs.</p>
+          </div>
+        </a>
+        <a class="card" href="/games/">
+          <span class="card-number">02 / games</span>
+          <div>
+            <h3>Change the outcome.</h3>
+            <p>Explore voting rules and soccer tactics through interactive, browser-only labs.</p>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Open source map</p>
+          <h2>Follow the machinery.</h2>
+        </div>
+        <p>The public site is presentation-only; engines and service code remain independently testable.</p>
+      </div>
+      <div class="repo-grid">
+        {
+          repositories.map((repo) => (
+            <a class="repo-card" href={repo.href} target="_blank" rel="noreferrer">
+              <span class="tag">{repo.label}</span>
+              <h3>{repo.name}</h3>
+              <p>{repo.description}</p>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</BaseLayout>

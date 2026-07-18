@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://discrete-event-systems.github.io/sitemap.xml

@@ -1,0 +1,5703 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voting Algorithm Lab</title>
+<style>
+:root {
+  color-scheme: light;
+  --ink: #172033;
+  --muted: #64748b;
+  --panel: #ffffff;
+  --line: #d8dee8;
+  --soft: #f5f7fb;
+  --accent: #0f766e;
+  --danger: #dc2626;
+  --focus: #2563eb;
+  --shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  margin: 0;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #eef2f7;
+  color: var(--ink);
+}
+button, input { font: inherit; }
+button {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+}
+.app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+}
+.topbar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 20px;
+  align-items: end;
+  padding: 22px 28px 16px;
+  background: #172033;
+  color: #f8fafc;
+}
+h1 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.5vw, 2.2rem);
+  letter-spacing: 0;
+}
+.subtitle {
+  margin: 6px 0 0;
+  color: #cbd5e1;
+  max-width: 860px;
+  line-height: 1.45;
+}
+.metric {
+  display: grid;
+  gap: 2px;
+  justify-items: end;
+  white-space: nowrap;
+}
+.metric strong { font-size: 1.35rem; }
+.metric span { color: #cbd5e1; font-size: .85rem; }
+.requirements {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px 28px;
+  background: #dfe7f1;
+  border-bottom: 1px solid #cbd5e1;
+}
+.req {
+  background: rgba(255,255,255,.72);
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.req b { display: block; font-size: .78rem; color: #475569; text-transform: uppercase; letter-spacing: .08em; }
+.req strong { display: block; margin-top: 2px; font-size: .98rem; }
+.req p { margin: 5px 0 0; color: #475569; font-size: .84rem; line-height: 1.35; }
+.workspace {
+  display: grid;
+  grid-template-columns: 270px minmax(0, 1fr);
+  min-height: 0;
+}
+.system-nav {
+  background: #f8fafc;
+  border-right: 1px solid #cbd5e1;
+  padding: 14px;
+  overflow: auto;
+}
+.system-tabs {
+  display: grid;
+  gap: 8px;
+}
+.system-tab {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  border-radius: 8px;
+  padding: 10px 11px;
+  min-height: 56px;
+  transition: border-color .2s, background .2s, transform .2s;
+}
+.system-tab:hover { transform: translateX(2px); }
+.system-tab.active {
+  border-color: #0f766e;
+  background: #e7f7f2;
+}
+.system-tab .name { font-weight: 700; font-size: .94rem; overflow-wrap: anywhere; }
+.system-tab .family { color: var(--muted); font-size: .75rem; margin-top: 2px; }
+.system-tab .count {
+  min-width: 2.2rem;
+  height: 1.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #edf2f7;
+  color: #334155;
+  font-size: .78rem;
+}
+.main {
+  min-width: 0;
+  padding: 18px 22px 24px;
+  overflow: auto;
+}
+.case-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.case-tab {
+  border-radius: 8px;
+  padding: 8px 11px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.case-tab.active {
+  color: #fff;
+  background: #172033;
+  border-color: #172033;
+}
+.case-tab .kind {
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  opacity: .76;
+}
+.summary-band {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, .38fr);
+  gap: 14px;
+  align-items: stretch;
+  margin-bottom: 14px;
+}
+.summary, .outcome {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+.eyebrow {
+  margin: 0 0 5px;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--muted);
+  font-size: .72rem;
+  font-weight: 800;
+}
+.summary h2 {
+  margin: 0;
+  font-size: 1.18rem;
+}
+.summary p, .outcome p {
+  margin: 8px 0 0;
+  color: #475569;
+  line-height: 1.45;
+}
+.edge {
+  display: none;
+  margin-top: 9px;
+  color: #8a4b00;
+  font-weight: 700;
+}
+.edge.visible { display: block; }
+.outcome strong {
+  display: block;
+  font-size: 1.08rem;
+}
+.visual-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px;
+  gap: 14px;
+}
+.arena, .side {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+.arena {
+  padding: 14px;
+  min-height: 560px;
+}
+.frame-title-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.frame-title-row h3 {
+  margin: 0;
+  font-size: 1.08rem;
+}
+.frame-title-row p {
+  margin: 5px 0 0;
+  color: #475569;
+  line-height: 1.4;
+}
+.round-pill {
+  border-radius: 999px;
+  background: #edf2f7;
+  color: #334155;
+  padding: 6px 10px;
+  font-weight: 800;
+  font-size: .78rem;
+  white-space: nowrap;
+}
+.bar-stack {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 18px 4px 8px;
+}
+.threshold {
+  position: absolute;
+  top: 12px;
+  bottom: 0;
+  width: 0;
+  border-left: 2px dashed #111827;
+  opacity: .62;
+  pointer-events: none;
+}
+.threshold span {
+  position: absolute;
+  top: -12px;
+  left: 5px;
+  white-space: nowrap;
+  background: #111827;
+  color: #fff;
+  border-radius: 5px;
+  padding: 2px 5px;
+  font-size: .68rem;
+}
+.bar-row {
+  display: grid;
+  grid-template-columns: 136px minmax(120px, 1fr) 112px;
+  gap: 10px;
+  align-items: center;
+  min-height: 48px;
+}
+.cand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  flex: 0 0 auto;
+}
+.cand span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 800;
+}
+.track {
+  position: relative;
+  height: 32px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #edf2f7;
+}
+.fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 6px;
+  transition: width .85s cubic-bezier(.19, 1, .22, 1), opacity .2s;
+  box-shadow: inset 0 -10px 18px rgba(0,0,0,.12);
+}
+.bar-row.winner .track { outline: 2px solid #0f766e; outline-offset: 2px; }
+.bar-row.eliminated { opacity: .45; }
+.bar-value {
+  font-variant-numeric: tabular-nums;
+  color: #334155;
+  font-size: .84rem;
+  text-align: right;
+}
+.packet-lane {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 9px;
+  margin-top: 18px;
+}
+.packet {
+  min-height: 62px;
+  border: 1px solid #d8dee8;
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: #f8fafc;
+  position: relative;
+  overflow: hidden;
+}
+.packet:before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: var(--packet-color);
+}
+.packet strong { display: block; font-size: .88rem; }
+.packet span { display: block; color: #475569; font-size: .78rem; margin-top: 4px; line-height: 1.3; }
+.packet .dot {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 12px;
+  height: 12px;
+  border-radius: 99px;
+  background: var(--packet-color);
+  animation: drift 1.4s ease-in-out infinite alternate;
+}
+@keyframes drift {
+  from { transform: translateX(-8px); opacity: .55; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.side {
+  min-width: 0;
+  padding: 14px;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+.panel-section {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 13px;
+}
+.panel-section:last-child { border-bottom: 0; padding-bottom: 0; }
+.panel-section h4 {
+  margin: 0 0 8px;
+  font-size: .9rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #475569;
+}
+.note-list, .caveat-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 7px;
+}
+.note-list li, .caveat-list li {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  padding: 8px 9px;
+  color: #475569;
+  line-height: 1.35;
+  font-size: .84rem;
+}
+.transfer-list, .pairwise-list, .bet-list {
+  display: grid;
+  gap: 8px;
+}
+.transfer, .pair, .bet {
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 9px 10px;
+}
+.transfer strong, .pair strong, .bet strong { display: block; font-size: .86rem; }
+.transfer span, .pair span, .bet span {
+  display: block;
+  color: #475569;
+  font-size: .78rem;
+  margin-top: 4px;
+  line-height: 1.35;
+}
+.controls {
+  display: grid;
+  grid-template-columns: auto auto auto minmax(140px, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.icon-btn {
+  width: 38px;
+  height: 34px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+}
+input[type="range"] {
+  width: 100%;
+  accent-color: #0f766e;
+}
+.frame-counter {
+  color: var(--muted);
+  font-size: .82rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.empty {
+  color: var(--muted);
+  font-size: .84rem;
+}
+@media (max-width: 1120px) {
+  .workspace { grid-template-columns: 1fr; }
+  .system-nav { border-right: 0; border-bottom: 1px solid #cbd5e1; }
+  .system-tabs { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+  .visual-grid, .summary-band { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .topbar { grid-template-columns: 1fr; }
+  .metric { justify-items: start; }
+  .requirements { grid-template-columns: 1fr; padding: 10px 14px; }
+  .main { padding: 14px; }
+  .bar-row { grid-template-columns: 1fr; gap: 5px; }
+  .bar-value { text-align: left; }
+  .controls { grid-template-columns: repeat(3, auto) 1fr; }
+  .frame-counter { grid-column: 1 / -1; }
+}
+</style>
+</head>
+<body>
+<script id="voting-lab-payload" type="application/json">{
+  "title": "Voting Algorithm Lab",
+  "subtitle": "Ten 1,000-record civic scenarios with animated tallies, transfers, supermajorities, and failure modes.",
+  "totalVoteRecords": 1000,
+  "requirements": [
+    {
+      "label": "USACC panel",
+      "value": "15 seats / 12 required",
+      "detail": "Model a 1,000-person eligible reviewer pool, seat 15 after conflict screening, and require an 80% supermajority for a finding."
+    },
+    {
+      "label": "Signal hygiene",
+      "value": "verified, de-duped, auditable",
+      "detail": "Public support, reviewer votes, and escrow signals are kept separate so a funding surge cannot masquerade as adjudication."
+    },
+    {
+      "label": "Partial observability",
+      "value": "process action, not guilt oracle",
+      "detail": "Several edge cases show when a vote should trigger audit, supplementation, recusal, or closure rather than a final factual conclusion."
+    }
+  ],
+  "systems": [
+    {
+      "id": "usacc-supermajority",
+      "label": "USACC 12-of-15 Supermajority Panel",
+      "shortLabel": "USACC 12/15",
+      "family": "court / supermajority",
+      "description": "A 1,000-person eligible pool is screened, a 15-person panel is seated, and a finding needs 12 votes.",
+      "scenarioFit": "Anti-corruption admission or trial gates where legitimacy depends on a high bar, random rotation, conflicts review, and sealed votes.",
+      "caveats": [
+        "A supermajority vote is a gate, not an automated finding of truth.",
+        "Pool eligibility, conflict screening, panel replacement, and audit logs matter as much as the threshold.",
+        "Public support and escrow signals should route process actions; they should not count as panel votes."
+      ],
+      "cases": [
+        {
+          "id": "clean-12-of-15",
+          "label": "Clean 12-of-15 finding",
+          "kind": "normal",
+          "scenario": "Randomized panel reaches the 80% finding threshold.",
+          "edgeFocus": null,
+          "totalVoteRecords": 1000,
+          "countedVotes": 15,
+          "thresholdLabel": "12 of 15 required",
+          "winnerId": "finding",
+          "winnerName": "Finding supported",
+          "outcome": "Finding supported with 12/15 panel votes.",
+          "candidates": [
+            {
+              "id": "finding",
+              "name": "Finding supported",
+              "shortName": "12+",
+              "color": "#0f766e"
+            },
+            {
+              "id": "not_proven",
+              "name": "Not proven",
+              "shortName": "NP",
+              "color": "#dc2626"
+            },
+            {
+              "id": "reserve",
+              "name": "Eligible reserve",
+              "shortName": "Res",
+              "color": "#64748b"
+            },
+            {
+              "id": "recused",
+              "name": "Recused",
+              "shortName": "Rec",
+              "color": "#f59e0b"
+            }
+          ],
+          "caveats": [
+            "The threshold is exactly met: 12 finding-supported votes out of 15 seated panelists.",
+            "The other 985 eligible reviewers remain in reserve for rotation and backfill."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Eligible reviewer pool",
+              "detail": "All 1,000 records start as eligible reviewers before random draw, conflicts review, and stage separation.",
+              "round": 0,
+              "totals": [
+                {
+                  "candidateId": "reserve",
+                  "label": "Eligible reserve",
+                  "color": "#64748b",
+                  "value": 1000.0,
+                  "percent": 100.0,
+                  "status": "active",
+                  "detail": "1000 eligible records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [
+                {
+                  "label": "eligible pool",
+                  "count": 1000,
+                  "from": null,
+                  "to": "reserve",
+                  "color": "#64748b",
+                  "note": "qualified records before random panel draw"
+                }
+              ],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "The pool is intentionally much larger than the seated panel to reduce capture and repeat-player effects."
+              ]
+            },
+            {
+              "title": "Random 15-person panel seated",
+              "detail": "Fifteen panelists are seated and the remaining records stay outside the counted vote.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "reserve",
+                  "label": "Eligible reserve",
+                  "color": "#64748b",
+                  "value": 985.0,
+                  "percent": 98.5,
+                  "status": "active",
+                  "detail": "985 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "finding",
+                  "label": "Finding supported",
+                  "color": "#0f766e",
+                  "value": 12.0,
+                  "percent": 1.2,
+                  "status": "active",
+                  "detail": "12 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "not_proven",
+                  "label": "Not proven",
+                  "color": "#dc2626",
+                  "value": 3.0,
+                  "percent": 0.3,
+                  "status": "active",
+                  "detail": "3 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [
+                {
+                  "label": "seated panel",
+                  "count": 15,
+                  "from": "reserve",
+                  "to": "finding",
+                  "color": "#0f766e",
+                  "note": "15 counted seats after screening"
+                },
+                {
+                  "label": "not seated",
+                  "count": 985,
+                  "from": "reserve",
+                  "to": "reserve",
+                  "color": "#64748b",
+                  "note": "eligible reserve remains available for later rotation"
+                }
+              ],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "The denominator for the finding is the seated panel, not the full pool."
+              ]
+            },
+            {
+              "title": "Sealed panel vote",
+              "detail": "The final finding threshold is 12 of 15. Falling below it produces a not-proven result.",
+              "round": 2,
+              "totals": [
+                {
+                  "candidateId": "finding",
+                  "label": "Finding supported",
+                  "color": "#0f766e",
+                  "value": 12.0,
+                  "percent": 80.0,
+                  "status": "winner",
+                  "detail": "12 panel votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "not_proven",
+                  "label": "Not proven",
+                  "color": "#dc2626",
+                  "value": 3.0,
+                  "percent": 20.0,
+                  "status": "active",
+                  "detail": "3 panel votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": 12.0,
+              "notes": [
+                "The threshold is exactly met: 12 finding-supported votes out of 15 seated panelists.",
+                "The other 985 eligible reviewers remain in reserve for rotation and backfill."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "holdout-11-of-15",
+          "label": "Holdout edge",
+          "kind": "edge",
+          "scenario": "A strong 11-of-15 majority still fails the 12-vote rule.",
+          "edgeFocus": "One extra holdout blocks a finding even though support is 73.3% of the panel.",
+          "totalVoteRecords": 1000,
+          "countedVotes": 15,
+          "thresholdLabel": "12 of 15 required",
+          "winnerId": "not_proven",
+          "winnerName": "Not proven",
+          "outcome": "Not proven: 11/15 is below the 12-vote threshold.",
+          "candidates": [
+            {
+              "id": "finding",
+              "name": "Finding supported",
+              "shortName": "12+",
+              "color": "#0f766e"
+            },
+            {
+              "id": "not_proven",
+              "name": "Not proven",
+              "shortName": "NP",
+              "color": "#dc2626"
+            },
+            {
+              "id": "reserve",
+              "name": "Eligible reserve",
+              "shortName": "Res",
+              "color": "#64748b"
+            },
+            {
+              "id": "recused",
+              "name": "Recused",
+              "shortName": "Rec",
+              "color": "#f59e0b"
+            }
+          ],
+          "caveats": [
+            "This is intentional for trial-like gates: one or two dissenters do not block, but four do.",
+            "The UI keeps this distinct from unanimity so the design can tune false-positive and false-negative risk."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Eligible reviewer pool",
+              "detail": "All 1,000 records start as eligible reviewers before random draw, conflicts review, and stage separation.",
+              "round": 0,
+              "totals": [
+                {
+                  "candidateId": "reserve",
+                  "label": "Eligible reserve",
+                  "color": "#64748b",
+                  "value": 1000.0,
+                  "percent": 100.0,
+                  "status": "active",
+                  "detail": "1000 eligible records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [
+                {
+                  "label": "eligible pool",
+                  "count": 1000,
+                  "from": null,
+                  "to": "reserve",
+                  "color": "#64748b",
+                  "note": "qualified records before random panel draw"
+                }
+              ],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "The pool is intentionally much larger than the seated panel to reduce capture and repeat-player effects."
+              ]
+            },
+            {
+              "title": "Random 15-person panel seated",
+              "detail": "Fifteen panelists are seated and the remaining records stay outside the counted vote.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "reserve",
+                  "label": "Eligible reserve",
+                  "color": "#64748b",
+                  "value": 985.0,
+                  "percent": 98.5,
+                  "status": "active",
+                  "detail": "985 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "finding",
+                  "label": "Finding supported",
+                  "color": "#0f766e",
+                  "value": 11.0,
+                  "percent": 1.1,
+                  "status": "active",
+                  "detail": "11 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "not_proven",
+                  "label": "Not proven",
+                  "color": "#dc2626",
+                  "value": 4.0,
+                  "percent": 0.4,
+                  "status": "active",
+                  "detail": "4 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [
+                {
+                  "label": "seated panel",
+                  "count": 15,
+                  "from": "reserve",
+                  "to": "finding",
+                  "color": "#0f766e",
+                  "note": "15 counted seats after screening"
+                },
+                {
+                  "label": "not seated",
+                  "count": 985,
+                  "from": "reserve",
+                  "to": "reserve",
+                  "color": "#64748b",
+                  "note": "eligible reserve remains available for later rotation"
+                }
+              ],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "The denominator for the finding is the seated panel, not the full pool."
+              ]
+            },
+            {
+              "title": "Sealed panel vote",
+              "detail": "The final finding threshold is 12 of 15. Falling below it produces a not-proven result.",
+              "round": 2,
+              "totals": [
+                {
+                  "candidateId": "finding",
+                  "label": "Finding supported",
+                  "color": "#0f766e",
+                  "value": 11.0,
+                  "percent": 73.33333333333333,
+                  "status": "active",
+                  "detail": "11 panel votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "not_proven",
+                  "label": "Not proven",
+                  "color": "#dc2626",
+                  "value": 4.0,
+                  "percent": 26.666666666666668,
+                  "status": "winner",
+                  "detail": "4 panel votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": 12.0,
+              "notes": [
+                "This is intentional for trial-like gates: one or two dissenters do not block, but four do.",
+                "The UI keeps this distinct from unanimity so the design can tune false-positive and false-negative risk."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "recusal-refill",
+          "label": "Recusal + refill edge",
+          "kind": "edge",
+          "scenario": "Two conflicted panelists are removed and replaced from the reserve pool before the sealed vote is counted.",
+          "edgeFocus": "Conflict screening changes who counts without changing the 12-of-15 threshold.",
+          "totalVoteRecords": 1000,
+          "countedVotes": 15,
+          "thresholdLabel": "12 of 15 required",
+          "winnerId": "finding",
+          "winnerName": "Finding supported",
+          "outcome": "Finding supported with 12/15 panel votes.",
+          "candidates": [
+            {
+              "id": "finding",
+              "name": "Finding supported",
+              "shortName": "12+",
+              "color": "#0f766e"
+            },
+            {
+              "id": "not_proven",
+              "name": "Not proven",
+              "shortName": "NP",
+              "color": "#dc2626"
+            },
+            {
+              "id": "reserve",
+              "name": "Eligible reserve",
+              "shortName": "Res",
+              "color": "#64748b"
+            },
+            {
+              "id": "recused",
+              "name": "Recused",
+              "shortName": "Rec",
+              "color": "#f59e0b"
+            }
+          ],
+          "caveats": [
+            "Recusals should be visible in the audit trail, but recused votes never enter the verdict denominator.",
+            "Replacement draws need their own randomness and conflict checks to avoid panel shopping."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Eligible reviewer pool",
+              "detail": "All 1,000 records start as eligible reviewers before random draw, conflicts review, and stage separation.",
+              "round": 0,
+              "totals": [
+                {
+                  "candidateId": "reserve",
+                  "label": "Eligible reserve",
+                  "color": "#64748b",
+                  "value": 1000.0,
+                  "percent": 100.0,
+                  "status": "active",
+                  "detail": "1000 eligible records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [
+                {
+                  "label": "eligible pool",
+                  "count": 1000,
+                  "from": null,
+                  "to": "reserve",
+                  "color": "#64748b",
+                  "note": "qualified records before random panel draw"
+                }
+              ],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "The pool is intentionally much larger than the seated panel to reduce capture and repeat-player effects."
+              ]
+            },
+            {
+              "title": "Draw, recuse, and refill",
+              "detail": "The first draw exposes conflicts; recused panelists are replaced from reserve before voting.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "reserve",
+                  "label": "Eligible reserve",
+                  "color": "#64748b",
+                  "value": 983.0,
+                  "percent": 98.3,
+                  "status": "active",
+                  "detail": "983 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "finding",
+                  "label": "Finding supported",
+                  "color": "#0f766e",
+                  "value": 12.0,
+                  "percent": 1.2,
+                  "status": "active",
+                  "detail": "12 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "not_proven",
+                  "label": "Not proven",
+                  "color": "#dc2626",
+                  "value": 3.0,
+                  "percent": 0.3,
+                  "status": "active",
+                  "detail": "3 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "recused",
+                  "label": "Recused",
+                  "color": "#f59e0b",
+                  "value": 2.0,
+                  "percent": 0.2,
+                  "status": "active",
+                  "detail": "2 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [
+                {
+                  "label": "seated panel",
+                  "count": 15,
+                  "from": "reserve",
+                  "to": "finding",
+                  "color": "#0f766e",
+                  "note": "15 counted seats after screening"
+                },
+                {
+                  "label": "not seated",
+                  "count": 983,
+                  "from": "reserve",
+                  "to": "reserve",
+                  "color": "#64748b",
+                  "note": "eligible reserve remains available for later rotation"
+                }
+              ],
+              "transfers": [
+                {
+                  "from": "recused",
+                  "to": "reserve",
+                  "count": 2,
+                  "label": "conflict backfill",
+                  "color": "#f59e0b"
+                }
+              ],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "Recusal is a process event, not a vote outcome.",
+                "Backfill should be auditable and randomized inside the qualified pool."
+              ]
+            },
+            {
+              "title": "Sealed panel vote",
+              "detail": "The final finding threshold is 12 of 15. Falling below it produces a not-proven result.",
+              "round": 2,
+              "totals": [
+                {
+                  "candidateId": "finding",
+                  "label": "Finding supported",
+                  "color": "#0f766e",
+                  "value": 12.0,
+                  "percent": 80.0,
+                  "status": "winner",
+                  "detail": "12 panel votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "not_proven",
+                  "label": "Not proven",
+                  "color": "#dc2626",
+                  "value": 3.0,
+                  "percent": 20.0,
+                  "status": "active",
+                  "detail": "3 panel votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": 12.0,
+              "notes": [
+                "Recusals should be visible in the audit trail, but recused votes never enter the verdict denominator.",
+                "Replacement draws need their own randomness and conflict checks to avoid panel shopping."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "simple-majority",
+      "label": "Simple Majority",
+      "shortLabel": "Majority",
+      "family": "binary threshold",
+      "description": "Each of the 1,000 vote records chooses yes or no. More than half wins; an exact tie has no winner.",
+      "scenarioFit": "Referenda, governance proposals, and low-stakes binary decisions where a bare majority is acceptable.",
+      "caveats": [
+        "The exact threshold must be explicit: greater than half, at least half, or half plus one.",
+        "Abstentions, spoiled ballots, and recount rules should be specified before voting starts."
+      ],
+      "cases": [
+        {
+          "id": "proposal-passes",
+          "label": "Proposal passes",
+          "kind": "normal",
+          "scenario": "A policy proposal clears the half-plus-one threshold.",
+          "edgeFocus": null,
+          "totalVoteRecords": 1000,
+          "countedVotes": 1000,
+          "thresholdLabel": "501 of 1000 required",
+          "winnerId": "yes",
+          "winnerName": "Yes",
+          "outcome": "Proposal passes 534-466.",
+          "candidates": [
+            {
+              "id": "yes",
+              "name": "Yes",
+              "shortName": "Yes",
+              "color": "#0f9f6e"
+            },
+            {
+              "id": "no",
+              "name": "No",
+              "shortName": "No",
+              "color": "#d43f3a"
+            }
+          ],
+          "caveats": [
+            "A bare majority is decisive here because the model has only two valid choices."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Collect binary vote records",
+              "detail": "Each record contributes exactly one yes/no vote.",
+              "round": 0,
+              "totals": [
+                {
+                  "candidateId": "yes",
+                  "label": "Yes",
+                  "color": "#0f9f6e",
+                  "value": 534.0,
+                  "percent": 53.4,
+                  "status": "active",
+                  "detail": "534 votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "no",
+                  "label": "No",
+                  "color": "#d43f3a",
+                  "value": 466.0,
+                  "percent": 46.6,
+                  "status": "active",
+                  "detail": "466 votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [
+                {
+                  "label": "yes records",
+                  "count": 534,
+                  "from": null,
+                  "to": "yes",
+                  "color": "#0f9f6e",
+                  "note": "proposal support"
+                },
+                {
+                  "label": "no records",
+                  "count": 466,
+                  "from": null,
+                  "to": "no",
+                  "color": "#d43f3a",
+                  "note": "proposal opposition"
+                }
+              ],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": 501.0,
+              "notes": [
+                "The reference denominator is 1,000 valid vote records."
+              ]
+            },
+            {
+              "title": "Apply majority threshold",
+              "detail": "The winning side must exceed half of the valid votes.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "yes",
+                  "label": "Yes",
+                  "color": "#0f9f6e",
+                  "value": 534.0,
+                  "percent": 53.4,
+                  "status": "winner",
+                  "detail": "534 votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "no",
+                  "label": "No",
+                  "color": "#d43f3a",
+                  "value": 466.0,
+                  "percent": 46.6,
+                  "status": "active",
+                  "detail": "466 votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": 501.0,
+              "notes": [
+                "A bare majority is decisive here because the model has only two valid choices."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "exact-tie",
+          "label": "Exact tie edge",
+          "kind": "edge",
+          "scenario": "Five hundred yes and five hundred no records create a deadlock.",
+          "edgeFocus": "Tie-breaking must be external to the tally rule.",
+          "totalVoteRecords": 1000,
+          "countedVotes": 1000,
+          "thresholdLabel": "501 of 1000 required",
+          "winnerId": null,
+          "winnerName": null,
+          "outcome": "No winner: the vote is tied 500-500.",
+          "candidates": [
+            {
+              "id": "yes",
+              "name": "Yes",
+              "shortName": "Yes",
+              "color": "#0f9f6e"
+            },
+            {
+              "id": "no",
+              "name": "No",
+              "shortName": "No",
+              "color": "#d43f3a"
+            }
+          ],
+          "caveats": [
+            "A deterministic tie-breaker can be legitimate for scheduling, but not for high-stakes factual findings.",
+            "For civic decisions, a tie usually means the status quo remains or the vote repeats."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Collect binary vote records",
+              "detail": "Each record contributes exactly one yes/no vote.",
+              "round": 0,
+              "totals": [
+                {
+                  "candidateId": "no",
+                  "label": "No",
+                  "color": "#d43f3a",
+                  "value": 500.0,
+                  "percent": 50.0,
+                  "status": "active",
+                  "detail": "500 votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "yes",
+                  "label": "Yes",
+                  "color": "#0f9f6e",
+                  "value": 500.0,
+                  "percent": 50.0,
+                  "status": "active",
+                  "detail": "500 votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [
+                {
+                  "label": "yes records",
+                  "count": 500,
+                  "from": null,
+                  "to": "yes",
+                  "color": "#0f9f6e",
+                  "note": "proposal support"
+                },
+                {
+                  "label": "no records",
+                  "count": 500,
+                  "from": null,
+                  "to": "no",
+                  "color": "#d43f3a",
+                  "note": "proposal opposition"
+                }
+              ],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": 501.0,
+              "notes": [
+                "The reference denominator is 1,000 valid vote records."
+              ]
+            },
+            {
+              "title": "Apply majority threshold",
+              "detail": "The winning side must exceed half of the valid votes.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "no",
+                  "label": "No",
+                  "color": "#d43f3a",
+                  "value": 500.0,
+                  "percent": 50.0,
+                  "status": "active",
+                  "detail": "500 votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "yes",
+                  "label": "Yes",
+                  "color": "#0f9f6e",
+                  "value": 500.0,
+                  "percent": 50.0,
+                  "status": "active",
+                  "detail": "500 votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": 501.0,
+              "notes": [
+                "A deterministic tie-breaker can be legitimate for scheduling, but not for high-stakes factual findings.",
+                "For civic decisions, a tie usually means the status quo remains or the vote repeats."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "unanimity",
+      "label": "Unanimous Consent",
+      "shortLabel": "Unanimity",
+      "family": "consensus / veto",
+      "description": "A proposal carries only when every counted record consents or, under the chosen rule, stands aside without blocking.",
+      "scenarioFit": "Tiny committees, consent agendas, and settings where protecting each participant from being overridden is more important than throughput.",
+      "caveats": [
+        "The system must define whether abstentions, silence, or stand-asides count as consent.",
+        "One bad-faith veto can create denial-of-service, so scope and good-standing rules matter."
+      ],
+      "cases": [
+        {
+          "id": "all-consent",
+          "label": "All consent",
+          "kind": "normal",
+          "scenario": "Every one of the 1,000 records consents.",
+          "edgeFocus": null,
+          "totalVoteRecords": 1000,
+          "countedVotes": 1000,
+          "thresholdLabel": "0 blockers required",
+          "winnerId": "consent",
+          "winnerName": "Consent",
+          "outcome": "Proposal carries: 1000 consent, 0 stand aside, 0 blocks.",
+          "candidates": [
+            {
+              "id": "consent",
+              "name": "Consent",
+              "shortName": "OK",
+              "color": "#0f9f6e"
+            },
+            {
+              "id": "block",
+              "name": "Block",
+              "shortName": "Blk",
+              "color": "#d43f3a"
+            },
+            {
+              "id": "stand_aside",
+              "name": "Stand aside",
+              "shortName": "SA",
+              "color": "#f59f00"
+            }
+          ],
+          "caveats": [
+            "This is the clean case: no block, no ambiguity, proposal carries."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Check every record",
+              "detail": "Unanimity is a veto scan: the first valid block changes the result.",
+              "round": 0,
+              "totals": [
+                {
+                  "candidateId": "consent",
+                  "label": "Consent",
+                  "color": "#0f9f6e",
+                  "value": 1000.0,
+                  "percent": 100.0,
+                  "status": "active",
+                  "detail": "1000 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "block",
+                  "label": "Block",
+                  "color": "#d43f3a",
+                  "value": 0.0,
+                  "percent": 0.0,
+                  "status": "active",
+                  "detail": "0 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "stand_aside",
+                  "label": "Stand aside",
+                  "color": "#f59f00",
+                  "value": 0.0,
+                  "percent": 0.0,
+                  "status": "active",
+                  "detail": "0 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [
+                {
+                  "label": "consent",
+                  "count": 1000,
+                  "from": null,
+                  "to": "consent",
+                  "color": "#0f9f6e",
+                  "note": "affirmative consent records"
+                },
+                {
+                  "label": "block",
+                  "count": 0,
+                  "from": null,
+                  "to": "block",
+                  "color": "#d43f3a",
+                  "note": "blocking records"
+                },
+                {
+                  "label": "stand aside",
+                  "count": 0,
+                  "from": null,
+                  "to": "stand_aside",
+                  "color": "#f59f00",
+                  "note": "non-blocking abstentions"
+                }
+              ],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": 0.0,
+              "notes": [
+                "The threshold line here means zero blockers, not a minimum support count."
+              ]
+            },
+            {
+              "title": "Apply no-block rule",
+              "detail": "The proposal carries only when the block count is zero.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "consent",
+                  "label": "Consent",
+                  "color": "#0f9f6e",
+                  "value": 1000.0,
+                  "percent": 100.0,
+                  "status": "winner",
+                  "detail": "1000 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "block",
+                  "label": "Block",
+                  "color": "#d43f3a",
+                  "value": 0.0,
+                  "percent": 0.0,
+                  "status": "active",
+                  "detail": "0 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "stand_aside",
+                  "label": "Stand aside",
+                  "color": "#f59f00",
+                  "value": 0.0,
+                  "percent": 0.0,
+                  "status": "active",
+                  "detail": "0 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": 0.0,
+              "notes": [
+                "This is the clean case: no block, no ambiguity, proposal carries."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "single-block",
+          "label": "Single blocker edge",
+          "kind": "edge",
+          "scenario": "One blocker is enough to stop the proposal.",
+          "edgeFocus": "A single veto has full stopping power.",
+          "totalVoteRecords": 1000,
+          "countedVotes": 1000,
+          "thresholdLabel": "0 blockers required",
+          "winnerId": "block",
+          "winnerName": "Block",
+          "outcome": "Proposal blocked by 1 record(s).",
+          "candidates": [
+            {
+              "id": "consent",
+              "name": "Consent",
+              "shortName": "OK",
+              "color": "#0f9f6e"
+            },
+            {
+              "id": "block",
+              "name": "Block",
+              "shortName": "Blk",
+              "color": "#d43f3a"
+            },
+            {
+              "id": "stand_aside",
+              "name": "Stand aside",
+              "shortName": "SA",
+              "color": "#f59f00"
+            }
+          ],
+          "caveats": [
+            "This protects minorities, but it can also let one actor halt the institution.",
+            "A process rule should distinguish principled blocks from irrelevant or abusive blocks."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Check every record",
+              "detail": "Unanimity is a veto scan: the first valid block changes the result.",
+              "round": 0,
+              "totals": [
+                {
+                  "candidateId": "consent",
+                  "label": "Consent",
+                  "color": "#0f9f6e",
+                  "value": 999.0,
+                  "percent": 99.9,
+                  "status": "active",
+                  "detail": "999 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "block",
+                  "label": "Block",
+                  "color": "#d43f3a",
+                  "value": 1.0,
+                  "percent": 0.1,
+                  "status": "active",
+                  "detail": "1 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "stand_aside",
+                  "label": "Stand aside",
+                  "color": "#f59f00",
+                  "value": 0.0,
+                  "percent": 0.0,
+                  "status": "active",
+                  "detail": "0 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [
+                {
+                  "label": "consent",
+                  "count": 999,
+                  "from": null,
+                  "to": "consent",
+                  "color": "#0f9f6e",
+                  "note": "affirmative consent records"
+                },
+                {
+                  "label": "block",
+                  "count": 1,
+                  "from": null,
+                  "to": "block",
+                  "color": "#d43f3a",
+                  "note": "blocking records"
+                },
+                {
+                  "label": "stand aside",
+                  "count": 0,
+                  "from": null,
+                  "to": "stand_aside",
+                  "color": "#f59f00",
+                  "note": "non-blocking abstentions"
+                }
+              ],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": 0.0,
+              "notes": [
+                "The threshold line here means zero blockers, not a minimum support count."
+              ]
+            },
+            {
+              "title": "Apply no-block rule",
+              "detail": "The proposal carries only when the block count is zero.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "consent",
+                  "label": "Consent",
+                  "color": "#0f9f6e",
+                  "value": 999.0,
+                  "percent": 99.9,
+                  "status": "active",
+                  "detail": "999 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "block",
+                  "label": "Block",
+                  "color": "#d43f3a",
+                  "value": 1.0,
+                  "percent": 0.1,
+                  "status": "winner",
+                  "detail": "1 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "stand_aside",
+                  "label": "Stand aside",
+                  "color": "#f59f00",
+                  "value": 0.0,
+                  "percent": 0.0,
+                  "status": "active",
+                  "detail": "0 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": 0.0,
+              "notes": [
+                "This protects minorities, but it can also let one actor halt the institution.",
+                "A process rule should distinguish principled blocks from irrelevant or abusive blocks."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "stand-aside",
+          "label": "Stand-aside edge",
+          "kind": "edge",
+          "scenario": "Forty records stand aside; none block, so the proposal carries under a consent-with-stand-asides rule.",
+          "edgeFocus": "Stand-asides lower enthusiasm without vetoing.",
+          "totalVoteRecords": 1000,
+          "countedVotes": 1000,
+          "thresholdLabel": "0 blockers required",
+          "winnerId": "consent",
+          "winnerName": "Consent",
+          "outcome": "Proposal carries: 960 consent, 40 stand aside, 0 blocks.",
+          "candidates": [
+            {
+              "id": "consent",
+              "name": "Consent",
+              "shortName": "OK",
+              "color": "#0f9f6e"
+            },
+            {
+              "id": "block",
+              "name": "Block",
+              "shortName": "Blk",
+              "color": "#d43f3a"
+            },
+            {
+              "id": "stand_aside",
+              "name": "Stand aside",
+              "shortName": "SA",
+              "color": "#f59f00"
+            }
+          ],
+          "caveats": [
+            "Stand-asides should be logged because a proposal with many stand-asides may need follow-up.",
+            "This variant avoids making abstention equivalent to veto."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Check every record",
+              "detail": "Unanimity is a veto scan: the first valid block changes the result.",
+              "round": 0,
+              "totals": [
+                {
+                  "candidateId": "consent",
+                  "label": "Consent",
+                  "color": "#0f9f6e",
+                  "value": 960.0,
+                  "percent": 96.0,
+                  "status": "active",
+                  "detail": "960 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "stand_aside",
+                  "label": "Stand aside",
+                  "color": "#f59f00",
+                  "value": 40.0,
+                  "percent": 4.0,
+                  "status": "active",
+                  "detail": "40 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "block",
+                  "label": "Block",
+                  "color": "#d43f3a",
+                  "value": 0.0,
+                  "percent": 0.0,
+                  "status": "active",
+                  "detail": "0 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [
+                {
+                  "label": "consent",
+                  "count": 960,
+                  "from": null,
+                  "to": "consent",
+                  "color": "#0f9f6e",
+                  "note": "affirmative consent records"
+                },
+                {
+                  "label": "block",
+                  "count": 0,
+                  "from": null,
+                  "to": "block",
+                  "color": "#d43f3a",
+                  "note": "blocking records"
+                },
+                {
+                  "label": "stand aside",
+                  "count": 40,
+                  "from": null,
+                  "to": "stand_aside",
+                  "color": "#f59f00",
+                  "note": "non-blocking abstentions"
+                }
+              ],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": 0.0,
+              "notes": [
+                "The threshold line here means zero blockers, not a minimum support count."
+              ]
+            },
+            {
+              "title": "Apply no-block rule",
+              "detail": "The proposal carries only when the block count is zero.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "consent",
+                  "label": "Consent",
+                  "color": "#0f9f6e",
+                  "value": 960.0,
+                  "percent": 96.0,
+                  "status": "winner",
+                  "detail": "960 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "stand_aside",
+                  "label": "Stand aside",
+                  "color": "#f59f00",
+                  "value": 40.0,
+                  "percent": 4.0,
+                  "status": "active",
+                  "detail": "40 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "block",
+                  "label": "Block",
+                  "color": "#d43f3a",
+                  "value": 0.0,
+                  "percent": 0.0,
+                  "status": "active",
+                  "detail": "0 records",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": 0.0,
+              "notes": [
+                "Stand-asides should be logged because a proposal with many stand-asides may need follow-up.",
+                "This variant avoids making abstention equivalent to veto."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "plurality",
+      "label": "Plurality / First Past the Post",
+      "shortLabel": "Plurality",
+      "family": "single-mark",
+      "description": "Only the first preference counts. The largest pile wins, even without a majority.",
+      "scenarioFit": "Fast, familiar elections where simplicity matters more than measuring fallback preference.",
+      "caveats": [
+        "A plurality winner can be opposed by most voters.",
+        "Similar candidates can split a coalition and change the winner.",
+        "Ties and recount triggers need external rules."
+      ],
+      "cases": [
+        {
+          "id": "city-council",
+          "label": "Four-way council race",
+          "kind": "normal",
+          "scenario": "Avery wins the largest first-choice pile with 34.2% of the vote.",
+          "edgeFocus": null,
+          "totalVoteRecords": 1000,
+          "countedVotes": 1000,
+          "thresholdLabel": null,
+          "winnerId": "avery",
+          "winnerName": "Avery",
+          "outcome": "Avery wins by plurality.",
+          "candidates": [
+            {
+              "id": "avery",
+              "name": "Avery",
+              "shortName": "Av",
+              "color": "#1f77b4"
+            },
+            {
+              "id": "blair",
+              "name": "Blair",
+              "shortName": "Bl",
+              "color": "#2ca02c"
+            },
+            {
+              "id": "casey",
+              "name": "Casey",
+              "shortName": "Ca",
+              "color": "#d95f02"
+            },
+            {
+              "id": "devon",
+              "name": "Devon",
+              "shortName": "De",
+              "color": "#7b61ff"
+            },
+            {
+              "id": "emery",
+              "name": "Emery",
+              "shortName": "Em",
+              "color": "#e11d48"
+            }
+          ],
+          "caveats": [
+            "The winner has the biggest pile, but not majority consent."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Sort first choices",
+              "detail": "Each ballot goes to its first listed active candidate.",
+              "round": 0,
+              "totals": [
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 342.0,
+                  "percent": 34.2,
+                  "status": "active",
+                  "detail": "342 first-choice votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 318.0,
+                  "percent": 31.8,
+                  "status": "active",
+                  "detail": "318 first-choice votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 190.0,
+                  "percent": 19.0,
+                  "status": "active",
+                  "detail": "190 first-choice votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "devon",
+                  "label": "Devon",
+                  "color": "#7b61ff",
+                  "value": 150.0,
+                  "percent": 15.0,
+                  "status": "active",
+                  "detail": "150 first-choice votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [
+                {
+                  "label": "Avery first",
+                  "count": 342,
+                  "from": null,
+                  "to": "avery",
+                  "color": "#1f77b4",
+                  "note": "first choice: Avery"
+                },
+                {
+                  "label": "Blair first",
+                  "count": 318,
+                  "from": null,
+                  "to": "blair",
+                  "color": "#2ca02c",
+                  "note": "first choice: Blair"
+                },
+                {
+                  "label": "Casey first",
+                  "count": 190,
+                  "from": null,
+                  "to": "casey",
+                  "color": "#d95f02",
+                  "note": "first choice: Casey"
+                },
+                {
+                  "label": "Devon first",
+                  "count": 150,
+                  "from": null,
+                  "to": "devon",
+                  "color": "#7b61ff",
+                  "note": "first choice: Devon"
+                }
+              ],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "Only the top name on each record is used."
+              ]
+            },
+            {
+              "title": "Largest pile wins",
+              "detail": "No majority threshold is applied.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 342.0,
+                  "percent": 34.2,
+                  "status": "winner",
+                  "detail": "342 first-choice votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 318.0,
+                  "percent": 31.8,
+                  "status": "active",
+                  "detail": "318 first-choice votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 190.0,
+                  "percent": 19.0,
+                  "status": "active",
+                  "detail": "190 first-choice votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "devon",
+                  "label": "Devon",
+                  "color": "#7b61ff",
+                  "value": 150.0,
+                  "percent": 15.0,
+                  "status": "active",
+                  "detail": "150 first-choice votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "The winner has the biggest pile, but not majority consent."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "spoiler-split",
+          "label": "Spoiler split edge",
+          "kind": "edge",
+          "scenario": "Avery wins while Blair would beat Avery head-to-head because Casey splits the anti-Avery coalition.",
+          "edgeFocus": "Plurality sees only first choices and ignores the majority's fallback preference.",
+          "totalVoteRecords": 1000,
+          "countedVotes": 1000,
+          "thresholdLabel": null,
+          "winnerId": "avery",
+          "winnerName": "Avery",
+          "outcome": "Avery wins by plurality.",
+          "candidates": [
+            {
+              "id": "avery",
+              "name": "Avery",
+              "shortName": "Av",
+              "color": "#1f77b4"
+            },
+            {
+              "id": "blair",
+              "name": "Blair",
+              "shortName": "Bl",
+              "color": "#2ca02c"
+            },
+            {
+              "id": "casey",
+              "name": "Casey",
+              "shortName": "Ca",
+              "color": "#d95f02"
+            },
+            {
+              "id": "devon",
+              "name": "Devon",
+              "shortName": "De",
+              "color": "#7b61ff"
+            },
+            {
+              "id": "emery",
+              "name": "Emery",
+              "shortName": "Em",
+              "color": "#e11d48"
+            }
+          ],
+          "caveats": [
+            "Blair is preferred over Avery by the Blair and Casey blocs: 640 to 360.",
+            "This is the classic spoiler/split-vote failure mode."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Sort first choices",
+              "detail": "Each ballot goes to its first listed active candidate.",
+              "round": 0,
+              "totals": [
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 360.0,
+                  "percent": 36.0,
+                  "status": "active",
+                  "detail": "360 first-choice votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 330.0,
+                  "percent": 33.0,
+                  "status": "active",
+                  "detail": "330 first-choice votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 310.0,
+                  "percent": 31.0,
+                  "status": "active",
+                  "detail": "310 first-choice votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [
+                {
+                  "label": "Avery bloc",
+                  "count": 360,
+                  "from": null,
+                  "to": "avery",
+                  "color": "#1f77b4",
+                  "note": "first choice: Avery"
+                },
+                {
+                  "label": "Blair bloc",
+                  "count": 330,
+                  "from": null,
+                  "to": "blair",
+                  "color": "#2ca02c",
+                  "note": "first choice: Blair"
+                },
+                {
+                  "label": "Casey bloc",
+                  "count": 310,
+                  "from": null,
+                  "to": "casey",
+                  "color": "#d95f02",
+                  "note": "first choice: Casey"
+                }
+              ],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "Only the top name on each record is used."
+              ]
+            },
+            {
+              "title": "Largest pile wins",
+              "detail": "No majority threshold is applied.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 360.0,
+                  "percent": 36.0,
+                  "status": "winner",
+                  "detail": "360 first-choice votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 330.0,
+                  "percent": 33.0,
+                  "status": "active",
+                  "detail": "330 first-choice votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 310.0,
+                  "percent": 31.0,
+                  "status": "active",
+                  "detail": "310 first-choice votes",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "Blair is preferred over Avery by the Blair and Casey blocs: 640 to 360.",
+                "This is the classic spoiler/split-vote failure mode."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "approval",
+      "label": "Approval Voting",
+      "shortLabel": "Approval",
+      "family": "multi-mark",
+      "description": "Each record can approve any number of acceptable candidates. Highest approval count wins.",
+      "scenarioFit": "Screening, committee selection, and broad-acceptability elections where voters can name all tolerable outcomes.",
+      "caveats": [
+        "The ballot must explain whether approving more candidates can harm a favorite.",
+        "Bullet voting can collapse approval into plurality-like behavior.",
+        "A tie can be common when a consensus slate is strong."
+      ],
+      "cases": [
+        {
+          "id": "broad-acceptability",
+          "label": "Broad acceptability",
+          "kind": "normal",
+          "scenario": "Blair wins because every bloc except the pure Devon bloc treats Blair as acceptable.",
+          "edgeFocus": null,
+          "totalVoteRecords": 1000,
+          "countedVotes": 1000,
+          "thresholdLabel": null,
+          "winnerId": "blair",
+          "winnerName": "Blair",
+          "outcome": "Blair wins on approval breadth.",
+          "candidates": [
+            {
+              "id": "avery",
+              "name": "Avery",
+              "shortName": "Av",
+              "color": "#1f77b4"
+            },
+            {
+              "id": "blair",
+              "name": "Blair",
+              "shortName": "Bl",
+              "color": "#2ca02c"
+            },
+            {
+              "id": "casey",
+              "name": "Casey",
+              "shortName": "Ca",
+              "color": "#d95f02"
+            },
+            {
+              "id": "devon",
+              "name": "Devon",
+              "shortName": "De",
+              "color": "#7b61ff"
+            },
+            {
+              "id": "emery",
+              "name": "Emery",
+              "shortName": "Em",
+              "color": "#e11d48"
+            }
+          ],
+          "caveats": [
+            "Approval can reward the candidate most groups can live with."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Collect all approvals",
+              "detail": "A single record can add one approval to several candidates.",
+              "round": 0,
+              "totals": [
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 820.0,
+                  "percent": 82.0,
+                  "status": "active",
+                  "detail": "820 approvals",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 660.0,
+                  "percent": 66.0,
+                  "status": "active",
+                  "detail": "660 approvals",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 600.0,
+                  "percent": 60.0,
+                  "status": "active",
+                  "detail": "600 approvals",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "devon",
+                  "label": "Devon",
+                  "color": "#7b61ff",
+                  "value": 180.0,
+                  "percent": 18.0,
+                  "status": "active",
+                  "detail": "180 approvals",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [
+                {
+                  "label": "Avery-aligned",
+                  "count": 340,
+                  "from": null,
+                  "to": "avery",
+                  "color": "#1f77b4",
+                  "note": "approves 2 candidate(s)"
+                },
+                {
+                  "label": "Blair-aligned",
+                  "count": 260,
+                  "from": null,
+                  "to": "avery",
+                  "color": "#1f77b4",
+                  "note": "approves 3 candidate(s)"
+                },
+                {
+                  "label": "Casey-aligned",
+                  "count": 220,
+                  "from": null,
+                  "to": "blair",
+                  "color": "#2ca02c",
+                  "note": "approves 2 candidate(s)"
+                },
+                {
+                  "label": "Devon-aligned",
+                  "count": 180,
+                  "from": null,
+                  "to": "casey",
+                  "color": "#d95f02",
+                  "note": "approves 2 candidate(s)"
+                }
+              ],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "Approval totals can exceed 1,000 because each voter can approve multiple candidates."
+              ]
+            },
+            {
+              "title": "Highest approval count wins",
+              "detail": "The most broadly acceptable candidate rises to the top.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 820.0,
+                  "percent": 82.0,
+                  "status": "winner",
+                  "detail": "820 approvals",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 660.0,
+                  "percent": 66.0,
+                  "status": "active",
+                  "detail": "660 approvals",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 600.0,
+                  "percent": 60.0,
+                  "status": "active",
+                  "detail": "600 approvals",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "devon",
+                  "label": "Devon",
+                  "color": "#7b61ff",
+                  "value": 180.0,
+                  "percent": 18.0,
+                  "status": "active",
+                  "detail": "180 approvals",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "Approval can reward the candidate most groups can live with."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "bullet-voting",
+          "label": "Bullet voting edge",
+          "kind": "edge",
+          "scenario": "The same first-choice blocs approve only their favorite, making the result behave like plurality.",
+          "edgeFocus": "Strategic bullet voting erases the extra information approval was meant to collect.",
+          "totalVoteRecords": 1000,
+          "countedVotes": 1000,
+          "thresholdLabel": null,
+          "winnerId": "avery",
+          "winnerName": "Avery",
+          "outcome": "Avery wins on approval breadth.",
+          "candidates": [
+            {
+              "id": "avery",
+              "name": "Avery",
+              "shortName": "Av",
+              "color": "#1f77b4"
+            },
+            {
+              "id": "blair",
+              "name": "Blair",
+              "shortName": "Bl",
+              "color": "#2ca02c"
+            },
+            {
+              "id": "casey",
+              "name": "Casey",
+              "shortName": "Ca",
+              "color": "#d95f02"
+            },
+            {
+              "id": "devon",
+              "name": "Devon",
+              "shortName": "De",
+              "color": "#7b61ff"
+            },
+            {
+              "id": "emery",
+              "name": "Emery",
+              "shortName": "Em",
+              "color": "#e11d48"
+            }
+          ],
+          "caveats": [
+            "The interface should make strategic incentives visible before users rely on the tally.",
+            "In high-stakes settings, approval may need education, audits, and clear tie rules."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Collect all approvals",
+              "detail": "A single record can add one approval to several candidates.",
+              "round": 0,
+              "totals": [
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 340.0,
+                  "percent": 34.0,
+                  "status": "active",
+                  "detail": "340 approvals",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 260.0,
+                  "percent": 26.0,
+                  "status": "active",
+                  "detail": "260 approvals",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 220.0,
+                  "percent": 22.0,
+                  "status": "active",
+                  "detail": "220 approvals",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "devon",
+                  "label": "Devon",
+                  "color": "#7b61ff",
+                  "value": 180.0,
+                  "percent": 18.0,
+                  "status": "active",
+                  "detail": "180 approvals",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [
+                {
+                  "label": "Avery bullets",
+                  "count": 340,
+                  "from": null,
+                  "to": "avery",
+                  "color": "#1f77b4",
+                  "note": "approves 1 candidate(s)"
+                },
+                {
+                  "label": "Blair bullets",
+                  "count": 260,
+                  "from": null,
+                  "to": "blair",
+                  "color": "#2ca02c",
+                  "note": "approves 1 candidate(s)"
+                },
+                {
+                  "label": "Casey bullets",
+                  "count": 220,
+                  "from": null,
+                  "to": "casey",
+                  "color": "#d95f02",
+                  "note": "approves 1 candidate(s)"
+                },
+                {
+                  "label": "Devon bullets",
+                  "count": 180,
+                  "from": null,
+                  "to": "devon",
+                  "color": "#7b61ff",
+                  "note": "approves 1 candidate(s)"
+                }
+              ],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "Approval totals can exceed 1,000 because each voter can approve multiple candidates."
+              ]
+            },
+            {
+              "title": "Highest approval count wins",
+              "detail": "The most broadly acceptable candidate rises to the top.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 340.0,
+                  "percent": 34.0,
+                  "status": "winner",
+                  "detail": "340 approvals",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 260.0,
+                  "percent": 26.0,
+                  "status": "active",
+                  "detail": "260 approvals",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 220.0,
+                  "percent": 22.0,
+                  "status": "active",
+                  "detail": "220 approvals",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "devon",
+                  "label": "Devon",
+                  "color": "#7b61ff",
+                  "value": 180.0,
+                  "percent": 18.0,
+                  "status": "active",
+                  "detail": "180 approvals",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "The interface should make strategic incentives visible before users rely on the tally.",
+                "In high-stakes settings, approval may need education, audits, and clear tie rules."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "score",
+      "label": "Score / Range Voting",
+      "shortLabel": "Score",
+      "family": "cardinal rating",
+      "description": "Every record rates each candidate from 0 to 5. The highest average rating wins.",
+      "scenarioFit": "Product councils, participatory budgeting screens, and preference surveys where magnitude matters.",
+      "caveats": [
+        "Scale interpretation is fragile: one voter's 4 may mean another voter's 2.",
+        "Strategic max/min scoring can dominate sincere middle scores.",
+        "Missing ratings need a rule: zero, neutral, or invalid ballot."
+      ],
+      "cases": [
+        {
+          "id": "consensus-score",
+          "label": "Consensus rating",
+          "kind": "normal",
+          "scenario": "Blair wins by high average support across blocs, even when not everyone ranks Blair first.",
+          "edgeFocus": null,
+          "totalVoteRecords": 1000,
+          "countedVotes": 1000,
+          "thresholdLabel": "highest average score",
+          "winnerId": "blair",
+          "winnerName": "Blair",
+          "outcome": "Blair wins by average score.",
+          "candidates": [
+            {
+              "id": "avery",
+              "name": "Avery",
+              "shortName": "Av",
+              "color": "#1f77b4"
+            },
+            {
+              "id": "blair",
+              "name": "Blair",
+              "shortName": "Bl",
+              "color": "#2ca02c"
+            },
+            {
+              "id": "casey",
+              "name": "Casey",
+              "shortName": "Ca",
+              "color": "#d95f02"
+            },
+            {
+              "id": "devon",
+              "name": "Devon",
+              "shortName": "De",
+              "color": "#7b61ff"
+            },
+            {
+              "id": "emery",
+              "name": "Emery",
+              "shortName": "Em",
+              "color": "#e11d48"
+            }
+          ],
+          "caveats": [
+            "Score voting can surface a consensus option without requiring ranked transfers."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Aggregate 0-5 ratings",
+              "detail": "Scores add across all 1,000 records; the display shows average rating per candidate.",
+              "round": 0,
+              "totals": [
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 3.94,
+                  "percent": 78.8,
+                  "status": "active",
+                  "detail": "3.94/5 avg (3940 pts)",
+                  "secondaryValue": 3940.0,
+                  "secondaryLabel": "raw points"
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 2.6,
+                  "percent": 52.0,
+                  "status": "active",
+                  "detail": "2.60/5 avg (2600 pts)",
+                  "secondaryValue": 2600.0,
+                  "secondaryLabel": "raw points"
+                },
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 2.34,
+                  "percent": 46.8,
+                  "status": "active",
+                  "detail": "2.34/5 avg (2340 pts)",
+                  "secondaryValue": 2340.0,
+                  "secondaryLabel": "raw points"
+                },
+                {
+                  "candidateId": "devon",
+                  "label": "Devon",
+                  "color": "#7b61ff",
+                  "value": 1.48,
+                  "percent": 29.6,
+                  "status": "active",
+                  "detail": "1.48/5 avg (1480 pts)",
+                  "secondaryValue": 1480.0,
+                  "secondaryLabel": "raw points"
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": 5.0,
+              "notes": [
+                "The maximum possible total is 5,000 points per candidate."
+              ]
+            },
+            {
+              "title": "Highest average wins",
+              "detail": "The top average rating becomes the score-voting winner.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 3.94,
+                  "percent": 78.8,
+                  "status": "winner",
+                  "detail": "3.94/5 avg (3940 pts)",
+                  "secondaryValue": 3940.0,
+                  "secondaryLabel": "raw points"
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 2.6,
+                  "percent": 52.0,
+                  "status": "active",
+                  "detail": "2.60/5 avg (2600 pts)",
+                  "secondaryValue": 2600.0,
+                  "secondaryLabel": "raw points"
+                },
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 2.34,
+                  "percent": 46.8,
+                  "status": "active",
+                  "detail": "2.34/5 avg (2340 pts)",
+                  "secondaryValue": 2340.0,
+                  "secondaryLabel": "raw points"
+                },
+                {
+                  "candidateId": "devon",
+                  "label": "Devon",
+                  "color": "#7b61ff",
+                  "value": 1.48,
+                  "percent": 29.6,
+                  "status": "active",
+                  "detail": "1.48/5 avg (1480 pts)",
+                  "secondaryValue": 1480.0,
+                  "secondaryLabel": "raw points"
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": 5.0,
+              "notes": [
+                "Score voting can surface a consensus option without requiring ranked transfers."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "max-min-strategy",
+          "label": "Max/min edge",
+          "kind": "edge",
+          "scenario": "A polarized bloc uses 5 for its favorite and 0 for everyone else, compressing the middle.",
+          "edgeFocus": "Strategic extremes can overpower sincere moderate ratings.",
+          "totalVoteRecords": 1000,
+          "countedVotes": 1000,
+          "thresholdLabel": "highest average score",
+          "winnerId": "avery",
+          "winnerName": "Avery",
+          "outcome": "Avery wins by average score.",
+          "candidates": [
+            {
+              "id": "avery",
+              "name": "Avery",
+              "shortName": "Av",
+              "color": "#1f77b4"
+            },
+            {
+              "id": "blair",
+              "name": "Blair",
+              "shortName": "Bl",
+              "color": "#2ca02c"
+            },
+            {
+              "id": "casey",
+              "name": "Casey",
+              "shortName": "Ca",
+              "color": "#d95f02"
+            },
+            {
+              "id": "devon",
+              "name": "Devon",
+              "shortName": "De",
+              "color": "#7b61ff"
+            },
+            {
+              "id": "emery",
+              "name": "Emery",
+              "shortName": "Em",
+              "color": "#e11d48"
+            }
+          ],
+          "caveats": [
+            "Score systems need a policy for normalization, missing values, and obvious ballot compression.",
+            "The tally is mathematically simple; the human scale semantics are the hard part."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Aggregate 0-5 ratings",
+              "detail": "Scores add across all 1,000 records; the display shows average rating per candidate.",
+              "round": 0,
+              "totals": [
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 2.84,
+                  "percent": 56.8,
+                  "status": "active",
+                  "detail": "2.84/5 avg (2840 pts)",
+                  "secondaryValue": 2840.0,
+                  "secondaryLabel": "raw points"
+                },
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 2.36,
+                  "percent": 47.2,
+                  "status": "active",
+                  "detail": "2.36/5 avg (2360 pts)",
+                  "secondaryValue": 2360.0,
+                  "secondaryLabel": "raw points"
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 2.1,
+                  "percent": 42.0,
+                  "status": "active",
+                  "detail": "2.10/5 avg (2100 pts)",
+                  "secondaryValue": 2100.0,
+                  "secondaryLabel": "raw points"
+                },
+                {
+                  "candidateId": "devon",
+                  "label": "Devon",
+                  "color": "#7b61ff",
+                  "value": 1.42,
+                  "percent": 28.4,
+                  "status": "active",
+                  "detail": "1.42/5 avg (1420 pts)",
+                  "secondaryValue": 1420.0,
+                  "secondaryLabel": "raw points"
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": 5.0,
+              "notes": [
+                "The maximum possible total is 5,000 points per candidate."
+              ]
+            },
+            {
+              "title": "Highest average wins",
+              "detail": "The top average rating becomes the score-voting winner.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 2.84,
+                  "percent": 56.8,
+                  "status": "winner",
+                  "detail": "2.84/5 avg (2840 pts)",
+                  "secondaryValue": 2840.0,
+                  "secondaryLabel": "raw points"
+                },
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 2.36,
+                  "percent": 47.2,
+                  "status": "active",
+                  "detail": "2.36/5 avg (2360 pts)",
+                  "secondaryValue": 2360.0,
+                  "secondaryLabel": "raw points"
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 2.1,
+                  "percent": 42.0,
+                  "status": "active",
+                  "detail": "2.10/5 avg (2100 pts)",
+                  "secondaryValue": 2100.0,
+                  "secondaryLabel": "raw points"
+                },
+                {
+                  "candidateId": "devon",
+                  "label": "Devon",
+                  "color": "#7b61ff",
+                  "value": 1.42,
+                  "percent": 28.4,
+                  "status": "active",
+                  "detail": "1.42/5 avg (1420 pts)",
+                  "secondaryValue": 1420.0,
+                  "secondaryLabel": "raw points"
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": 5.0,
+              "notes": [
+                "Score systems need a policy for normalization, missing values, and obvious ballot compression.",
+                "The tally is mathematically simple; the human scale semantics are the hard part."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ranked-choice",
+      "label": "Ranked-Choice / Instant Runoff",
+      "shortLabel": "RCV",
+      "family": "ranked elimination",
+      "description": "Ballots rank candidates. If nobody has a majority of continuing ballots, the lowest active candidate is eliminated and their ballots transfer.",
+      "scenarioFit": "Single-winner elections where fallback preferences matter and the winner should clear a majority of continuing ballots.",
+      "caveats": [
+        "Incomplete rankings can exhaust, lowering the continuing-vote denominator.",
+        "Ties for last place need a pre-published tie-breaker.",
+        "The tabulation should never mutate the original ballot records; transfers are derived views."
+      ],
+      "cases": [
+        {
+          "id": "transfer-majority",
+          "label": "Transfer majority",
+          "kind": "normal",
+          "scenario": "No candidate starts with a majority; Devon and Blair are eliminated and Casey wins through transfers.",
+          "edgeFocus": null,
+          "totalVoteRecords": 1000,
+          "countedVotes": 1000,
+          "thresholdLabel": "majority of continuing ballots",
+          "winnerId": "casey",
+          "winnerName": "Casey",
+          "outcome": "Casey wins after ranked transfers.",
+          "candidates": [
+            {
+              "id": "avery",
+              "name": "Avery",
+              "shortName": "Av",
+              "color": "#1f77b4"
+            },
+            {
+              "id": "blair",
+              "name": "Blair",
+              "shortName": "Bl",
+              "color": "#2ca02c"
+            },
+            {
+              "id": "casey",
+              "name": "Casey",
+              "shortName": "Ca",
+              "color": "#d95f02"
+            },
+            {
+              "id": "devon",
+              "name": "Devon",
+              "shortName": "De",
+              "color": "#7b61ff"
+            },
+            {
+              "id": "emery",
+              "name": "Emery",
+              "shortName": "Em",
+              "color": "#e11d48"
+            }
+          ],
+          "caveats": [
+            "The winner emerges from ranked fallback support, not first-choice plurality alone."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Round 1: count continuing ballots",
+              "detail": "1000 continuing records, 0 exhausted; majority requires more than 500.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 340.0,
+                  "percent": 34.0,
+                  "status": "active",
+                  "detail": "340 continuing votes",
+                  "secondaryValue": 340.0,
+                  "secondaryLabel": "round tally"
+                },
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 260.0,
+                  "percent": 26.0,
+                  "status": "active",
+                  "detail": "260 continuing votes",
+                  "secondaryValue": 260.0,
+                  "secondaryLabel": "round tally"
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 230.0,
+                  "percent": 23.0,
+                  "status": "active",
+                  "detail": "230 continuing votes",
+                  "secondaryValue": 230.0,
+                  "secondaryLabel": "round tally"
+                },
+                {
+                  "candidateId": "devon",
+                  "label": "Devon",
+                  "color": "#7b61ff",
+                  "value": 170.0,
+                  "percent": 17.0,
+                  "status": "active",
+                  "detail": "170 continuing votes",
+                  "secondaryValue": 170.0,
+                  "secondaryLabel": "round tally"
+                }
+              ],
+              "packets": [
+                {
+                  "label": "Avery first",
+                  "count": 340,
+                  "from": null,
+                  "to": "avery",
+                  "color": "#1f77b4",
+                  "note": "first choice: Avery"
+                },
+                {
+                  "label": "Blair first",
+                  "count": 260,
+                  "from": null,
+                  "to": "blair",
+                  "color": "#2ca02c",
+                  "note": "first choice: Blair"
+                },
+                {
+                  "label": "Casey first",
+                  "count": 230,
+                  "from": null,
+                  "to": "casey",
+                  "color": "#d95f02",
+                  "note": "first choice: Casey"
+                },
+                {
+                  "label": "Devon first",
+                  "count": 170,
+                  "from": null,
+                  "to": "devon",
+                  "color": "#7b61ff",
+                  "note": "first choice: Devon"
+                }
+              ],
+              "transfers": [
+                {
+                  "from": "devon",
+                  "to": "casey",
+                  "count": 170,
+                  "label": "to Casey",
+                  "color": "#d95f02"
+                }
+              ],
+              "pairwise": [],
+              "active": [
+                "avery",
+                "blair",
+                "casey",
+                "devon"
+              ],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": 500.0001,
+              "notes": [
+                "Devon is lowest and is eliminated."
+              ]
+            },
+            {
+              "title": "Round 2: count continuing ballots",
+              "detail": "1000 continuing records, 0 exhausted; majority requires more than 500.",
+              "round": 2,
+              "totals": [
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 400.0,
+                  "percent": 40.0,
+                  "status": "active",
+                  "detail": "400 continuing votes",
+                  "secondaryValue": 400.0,
+                  "secondaryLabel": "round tally"
+                },
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 340.0,
+                  "percent": 34.0,
+                  "status": "active",
+                  "detail": "340 continuing votes",
+                  "secondaryValue": 340.0,
+                  "secondaryLabel": "round tally"
+                },
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 260.0,
+                  "percent": 26.0,
+                  "status": "active",
+                  "detail": "260 continuing votes",
+                  "secondaryValue": 260.0,
+                  "secondaryLabel": "round tally"
+                }
+              ],
+              "packets": [],
+              "transfers": [
+                {
+                  "from": "blair",
+                  "to": "casey",
+                  "count": 260,
+                  "label": "to Casey",
+                  "color": "#d95f02"
+                }
+              ],
+              "pairwise": [],
+              "active": [
+                "avery",
+                "blair",
+                "casey"
+              ],
+              "eliminated": [
+                "devon"
+              ],
+              "exhausted": 0,
+              "threshold": 500.0001,
+              "notes": [
+                "Blair is lowest and is eliminated."
+              ]
+            },
+            {
+              "title": "Round 3: count continuing ballots",
+              "detail": "1000 continuing records, 0 exhausted; majority requires more than 500.",
+              "round": 3,
+              "totals": [
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 660.0,
+                  "percent": 66.0,
+                  "status": "winner",
+                  "detail": "660 continuing votes",
+                  "secondaryValue": 660.0,
+                  "secondaryLabel": "round tally"
+                },
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 340.0,
+                  "percent": 34.0,
+                  "status": "active",
+                  "detail": "340 continuing votes",
+                  "secondaryValue": 340.0,
+                  "secondaryLabel": "round tally"
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [
+                "avery",
+                "casey"
+              ],
+              "eliminated": [
+                "blair",
+                "devon"
+              ],
+              "exhausted": 0,
+              "threshold": 500.0001,
+              "notes": [
+                "Casey has a majority of continuing ballots.",
+                "The winner emerges from ranked fallback support, not first-choice plurality alone."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "exhausted-ballots",
+          "label": "Exhausted ballot edge",
+          "kind": "edge",
+          "scenario": "Some records rank only one candidate; when that candidate is eliminated, the records leave the continuing denominator.",
+          "edgeFocus": "Exhausted ballots can lower the majority threshold in later rounds.",
+          "totalVoteRecords": 1000,
+          "countedVotes": 1000,
+          "thresholdLabel": "majority of continuing ballots",
+          "winnerId": "blair",
+          "winnerName": "Blair",
+          "outcome": "Blair wins after ranked transfers.",
+          "candidates": [
+            {
+              "id": "avery",
+              "name": "Avery",
+              "shortName": "Av",
+              "color": "#1f77b4"
+            },
+            {
+              "id": "blair",
+              "name": "Blair",
+              "shortName": "Bl",
+              "color": "#2ca02c"
+            },
+            {
+              "id": "casey",
+              "name": "Casey",
+              "shortName": "Ca",
+              "color": "#d95f02"
+            },
+            {
+              "id": "devon",
+              "name": "Devon",
+              "shortName": "De",
+              "color": "#7b61ff"
+            },
+            {
+              "id": "emery",
+              "name": "Emery",
+              "shortName": "Em",
+              "color": "#e11d48"
+            }
+          ],
+          "caveats": [
+            "The page shows exhausted records separately so the lower denominator is not mistaken for disappearing voters.",
+            "Ballot instructions should encourage full rankings when exhaustion risk matters."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Round 1: count continuing ballots",
+              "detail": "1000 continuing records, 0 exhausted; majority requires more than 500.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 410.0,
+                  "percent": 41.0,
+                  "status": "active",
+                  "detail": "410 continuing votes",
+                  "secondaryValue": 410.0,
+                  "secondaryLabel": "round tally"
+                },
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 300.0,
+                  "percent": 30.0,
+                  "status": "active",
+                  "detail": "300 continuing votes",
+                  "secondaryValue": 300.0,
+                  "secondaryLabel": "round tally"
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 200.0,
+                  "percent": 20.0,
+                  "status": "active",
+                  "detail": "200 continuing votes",
+                  "secondaryValue": 200.0,
+                  "secondaryLabel": "round tally"
+                },
+                {
+                  "candidateId": "devon",
+                  "label": "Devon",
+                  "color": "#7b61ff",
+                  "value": 90.0,
+                  "percent": 9.0,
+                  "status": "active",
+                  "detail": "90 continuing votes",
+                  "secondaryValue": 90.0,
+                  "secondaryLabel": "round tally"
+                }
+              ],
+              "packets": [
+                {
+                  "label": "Avery-only",
+                  "count": 410,
+                  "from": null,
+                  "to": "avery",
+                  "color": "#1f77b4",
+                  "note": "first choice: Avery"
+                },
+                {
+                  "label": "Blair-to-Casey",
+                  "count": 300,
+                  "from": null,
+                  "to": "blair",
+                  "color": "#2ca02c",
+                  "note": "first choice: Blair"
+                },
+                {
+                  "label": "Casey-to-Blair",
+                  "count": 200,
+                  "from": null,
+                  "to": "casey",
+                  "color": "#d95f02",
+                  "note": "first choice: Casey"
+                },
+                {
+                  "label": "Devon-only",
+                  "count": 90,
+                  "from": null,
+                  "to": "devon",
+                  "color": "#7b61ff",
+                  "note": "first choice: Devon"
+                }
+              ],
+              "transfers": [
+                {
+                  "from": "devon",
+                  "to": null,
+                  "count": 90,
+                  "label": "exhausted",
+                  "color": "#94a3b8"
+                }
+              ],
+              "pairwise": [],
+              "active": [
+                "avery",
+                "blair",
+                "casey",
+                "devon"
+              ],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": 500.0001,
+              "notes": [
+                "Devon is lowest and is eliminated."
+              ]
+            },
+            {
+              "title": "Round 2: count continuing ballots",
+              "detail": "910 continuing records, 90 exhausted; majority requires more than 455.",
+              "round": 2,
+              "totals": [
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 410.0,
+                  "percent": 45.05494505494506,
+                  "status": "active",
+                  "detail": "410 continuing votes",
+                  "secondaryValue": 410.0,
+                  "secondaryLabel": "round tally"
+                },
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 300.0,
+                  "percent": 32.967032967032964,
+                  "status": "active",
+                  "detail": "300 continuing votes",
+                  "secondaryValue": 300.0,
+                  "secondaryLabel": "round tally"
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 200.0,
+                  "percent": 21.978021978021978,
+                  "status": "active",
+                  "detail": "200 continuing votes",
+                  "secondaryValue": 200.0,
+                  "secondaryLabel": "round tally"
+                }
+              ],
+              "packets": [],
+              "transfers": [
+                {
+                  "from": "casey",
+                  "to": "blair",
+                  "count": 200,
+                  "label": "to Blair",
+                  "color": "#2ca02c"
+                }
+              ],
+              "pairwise": [],
+              "active": [
+                "avery",
+                "blair",
+                "casey"
+              ],
+              "eliminated": [
+                "devon"
+              ],
+              "exhausted": 90,
+              "threshold": 455.0001,
+              "notes": [
+                "Casey is lowest and is eliminated."
+              ]
+            },
+            {
+              "title": "Round 3: count continuing ballots",
+              "detail": "910 continuing records, 90 exhausted; majority requires more than 455.",
+              "round": 3,
+              "totals": [
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 500.0,
+                  "percent": 54.94505494505494,
+                  "status": "winner",
+                  "detail": "500 continuing votes",
+                  "secondaryValue": 500.0,
+                  "secondaryLabel": "round tally"
+                },
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 410.0,
+                  "percent": 45.05494505494506,
+                  "status": "active",
+                  "detail": "410 continuing votes",
+                  "secondaryValue": 410.0,
+                  "secondaryLabel": "round tally"
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [
+                "avery",
+                "blair"
+              ],
+              "eliminated": [
+                "casey",
+                "devon"
+              ],
+              "exhausted": 90,
+              "threshold": 455.0001,
+              "notes": [
+                "Blair has a majority of continuing ballots.",
+                "The page shows exhausted records separately so the lower denominator is not mistaken for disappearing voters.",
+                "Ballot instructions should encourage full rankings when exhaustion risk matters."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "last-place-tie",
+          "label": "Last-place tie edge",
+          "kind": "edge",
+          "scenario": "Casey and Devon tie for last in round one; the deterministic tie-breaker decides who leaves first.",
+          "edgeFocus": "A last-place tie can steer the transfer path.",
+          "totalVoteRecords": 1000,
+          "countedVotes": 1000,
+          "thresholdLabel": "majority of continuing ballots",
+          "winnerId": "blair",
+          "winnerName": "Blair",
+          "outcome": "Blair wins after ranked transfers.",
+          "candidates": [
+            {
+              "id": "avery",
+              "name": "Avery",
+              "shortName": "Av",
+              "color": "#1f77b4"
+            },
+            {
+              "id": "blair",
+              "name": "Blair",
+              "shortName": "Bl",
+              "color": "#2ca02c"
+            },
+            {
+              "id": "casey",
+              "name": "Casey",
+              "shortName": "Ca",
+              "color": "#d95f02"
+            },
+            {
+              "id": "devon",
+              "name": "Devon",
+              "shortName": "De",
+              "color": "#7b61ff"
+            },
+            {
+              "id": "emery",
+              "name": "Emery",
+              "shortName": "Em",
+              "color": "#e11d48"
+            }
+          ],
+          "caveats": [
+            "The implementation uses candidate id order as a deterministic demo tie-breaker.",
+            "A production election would need a legally approved tie procedure."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Round 1: count continuing ballots",
+              "detail": "1000 continuing records, 0 exhausted; majority requires more than 500.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 350.0,
+                  "percent": 35.0,
+                  "status": "active",
+                  "detail": "350 continuing votes",
+                  "secondaryValue": 350.0,
+                  "secondaryLabel": "round tally"
+                },
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 250.0,
+                  "percent": 25.0,
+                  "status": "active",
+                  "detail": "250 continuing votes",
+                  "secondaryValue": 250.0,
+                  "secondaryLabel": "round tally"
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 200.0,
+                  "percent": 20.0,
+                  "status": "active",
+                  "detail": "200 continuing votes",
+                  "secondaryValue": 200.0,
+                  "secondaryLabel": "round tally"
+                },
+                {
+                  "candidateId": "devon",
+                  "label": "Devon",
+                  "color": "#7b61ff",
+                  "value": 200.0,
+                  "percent": 20.0,
+                  "status": "active",
+                  "detail": "200 continuing votes",
+                  "secondaryValue": 200.0,
+                  "secondaryLabel": "round tally"
+                }
+              ],
+              "packets": [
+                {
+                  "label": "Avery first",
+                  "count": 350,
+                  "from": null,
+                  "to": "avery",
+                  "color": "#1f77b4",
+                  "note": "first choice: Avery"
+                },
+                {
+                  "label": "Blair first",
+                  "count": 250,
+                  "from": null,
+                  "to": "blair",
+                  "color": "#2ca02c",
+                  "note": "first choice: Blair"
+                },
+                {
+                  "label": "Casey first",
+                  "count": 200,
+                  "from": null,
+                  "to": "casey",
+                  "color": "#d95f02",
+                  "note": "first choice: Casey"
+                },
+                {
+                  "label": "Devon first",
+                  "count": 200,
+                  "from": null,
+                  "to": "devon",
+                  "color": "#7b61ff",
+                  "note": "first choice: Devon"
+                }
+              ],
+              "transfers": [
+                {
+                  "from": "casey",
+                  "to": "blair",
+                  "count": 200,
+                  "label": "to Blair",
+                  "color": "#2ca02c"
+                }
+              ],
+              "pairwise": [],
+              "active": [
+                "avery",
+                "blair",
+                "casey",
+                "devon"
+              ],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": 500.0001,
+              "notes": [
+                "Last-place tie among Casey, Devon; demo tie-break eliminates Casey."
+              ]
+            },
+            {
+              "title": "Round 2: count continuing ballots",
+              "detail": "1000 continuing records, 0 exhausted; majority requires more than 500.",
+              "round": 2,
+              "totals": [
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 450.0,
+                  "percent": 45.0,
+                  "status": "active",
+                  "detail": "450 continuing votes",
+                  "secondaryValue": 450.0,
+                  "secondaryLabel": "round tally"
+                },
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 350.0,
+                  "percent": 35.0,
+                  "status": "active",
+                  "detail": "350 continuing votes",
+                  "secondaryValue": 350.0,
+                  "secondaryLabel": "round tally"
+                },
+                {
+                  "candidateId": "devon",
+                  "label": "Devon",
+                  "color": "#7b61ff",
+                  "value": 200.0,
+                  "percent": 20.0,
+                  "status": "active",
+                  "detail": "200 continuing votes",
+                  "secondaryValue": 200.0,
+                  "secondaryLabel": "round tally"
+                }
+              ],
+              "packets": [],
+              "transfers": [
+                {
+                  "from": "devon",
+                  "to": "blair",
+                  "count": 200,
+                  "label": "to Blair",
+                  "color": "#2ca02c"
+                }
+              ],
+              "pairwise": [],
+              "active": [
+                "avery",
+                "blair",
+                "devon"
+              ],
+              "eliminated": [
+                "casey"
+              ],
+              "exhausted": 0,
+              "threshold": 500.0001,
+              "notes": [
+                "Devon is lowest and is eliminated."
+              ]
+            },
+            {
+              "title": "Round 3: count continuing ballots",
+              "detail": "1000 continuing records, 0 exhausted; majority requires more than 500.",
+              "round": 3,
+              "totals": [
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 650.0,
+                  "percent": 65.0,
+                  "status": "winner",
+                  "detail": "650 continuing votes",
+                  "secondaryValue": 650.0,
+                  "secondaryLabel": "round tally"
+                },
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 350.0,
+                  "percent": 35.0,
+                  "status": "active",
+                  "detail": "350 continuing votes",
+                  "secondaryValue": 350.0,
+                  "secondaryLabel": "round tally"
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [
+                "avery",
+                "blair"
+              ],
+              "eliminated": [
+                "casey",
+                "devon"
+              ],
+              "exhausted": 0,
+              "threshold": 500.0001,
+              "notes": [
+                "Blair has a majority of continuing ballots.",
+                "The implementation uses candidate id order as a deterministic demo tie-breaker.",
+                "A production election would need a legally approved tie procedure."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "borda",
+      "label": "Borda Count",
+      "shortLabel": "Borda",
+      "family": "ranked scoring",
+      "description": "Rank positions convert to points. With N candidates, first gets N-1 points, second N-2, and so on.",
+      "scenarioFit": "Prioritization and committee-style rankings where full preference order should matter.",
+      "caveats": [
+        "Borda is sensitive to clones and nomination strategy.",
+        "Truncated rankings need a points rule for unranked candidates.",
+        "It can elect a compromise candidate without pairwise majority support."
+      ],
+      "cases": [
+        {
+          "id": "full-ranking",
+          "label": "Full ranking",
+          "kind": "normal",
+          "scenario": "A compromise candidate accumulates steady second-place points and wins.",
+          "edgeFocus": null,
+          "totalVoteRecords": 1000,
+          "countedVotes": 1000,
+          "thresholdLabel": "highest Borda score",
+          "winnerId": "blair",
+          "winnerName": "Blair",
+          "outcome": "Blair wins by Borda points.",
+          "candidates": [
+            {
+              "id": "avery",
+              "name": "Avery",
+              "shortName": "Av",
+              "color": "#1f77b4"
+            },
+            {
+              "id": "blair",
+              "name": "Blair",
+              "shortName": "Bl",
+              "color": "#2ca02c"
+            },
+            {
+              "id": "casey",
+              "name": "Casey",
+              "shortName": "Ca",
+              "color": "#d95f02"
+            },
+            {
+              "id": "devon",
+              "name": "Devon",
+              "shortName": "De",
+              "color": "#7b61ff"
+            },
+            {
+              "id": "emery",
+              "name": "Emery",
+              "shortName": "Em",
+              "color": "#e11d48"
+            }
+          ],
+          "caveats": [
+            "The middle-ranked candidate can win by collecting points from many blocs."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Convert ranks to points",
+              "detail": "Each ballot distributes descending points across its ranked candidates.",
+              "round": 0,
+              "totals": [
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 3260.0,
+                  "percent": 81.5,
+                  "status": "active",
+                  "detail": "3260 points",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 2740.0,
+                  "percent": 68.5,
+                  "status": "active",
+                  "detail": "2740 points",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 2190.0,
+                  "percent": 54.75,
+                  "status": "active",
+                  "detail": "2190 points",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "devon",
+                  "label": "Devon",
+                  "color": "#7b61ff",
+                  "value": 1810.0,
+                  "percent": 45.25,
+                  "status": "active",
+                  "detail": "1810 points",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [
+                {
+                  "label": "Avery bloc",
+                  "count": 310,
+                  "from": null,
+                  "to": "avery",
+                  "color": "#1f77b4",
+                  "note": "first choice: Avery"
+                },
+                {
+                  "label": "Blair bloc",
+                  "count": 260,
+                  "from": null,
+                  "to": "blair",
+                  "color": "#2ca02c",
+                  "note": "first choice: Blair"
+                },
+                {
+                  "label": "Casey bloc",
+                  "count": 240,
+                  "from": null,
+                  "to": "casey",
+                  "color": "#d95f02",
+                  "note": "first choice: Casey"
+                },
+                {
+                  "label": "Devon bloc",
+                  "count": 190,
+                  "from": null,
+                  "to": "devon",
+                  "color": "#7b61ff",
+                  "note": "first choice: Devon"
+                }
+              ],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "Unranked candidates receive zero points in this demo."
+              ]
+            },
+            {
+              "title": "Sum Borda points",
+              "detail": "The candidate with the highest total point score wins.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 3260.0,
+                  "percent": 81.5,
+                  "status": "winner",
+                  "detail": "3260 points",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 2740.0,
+                  "percent": 68.5,
+                  "status": "active",
+                  "detail": "2740 points",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 2190.0,
+                  "percent": 54.75,
+                  "status": "active",
+                  "detail": "2190 points",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "devon",
+                  "label": "Devon",
+                  "color": "#7b61ff",
+                  "value": 1810.0,
+                  "percent": 45.25,
+                  "status": "active",
+                  "detail": "1810 points",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "The middle-ranked candidate can win by collecting points from many blocs."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "clone-candidate",
+          "label": "Clone edge",
+          "kind": "edge",
+          "scenario": "A similar Avery-Prime entrant changes the point field and drags points away from the original Avery coalition.",
+          "edgeFocus": "Adding a near-clone can alter the outcome even when voter sentiment barely changes.",
+          "totalVoteRecords": 1000,
+          "countedVotes": 1000,
+          "thresholdLabel": "highest Borda score",
+          "winnerId": "blair",
+          "winnerName": "Blair",
+          "outcome": "Blair wins by Borda points.",
+          "candidates": [
+            {
+              "id": "avery",
+              "name": "Avery",
+              "shortName": "Av",
+              "color": "#1f77b4"
+            },
+            {
+              "id": "avery_prime",
+              "name": "Avery Prime",
+              "shortName": "A+",
+              "color": "#38bdf8"
+            },
+            {
+              "id": "blair",
+              "name": "Blair",
+              "shortName": "Bl",
+              "color": "#2ca02c"
+            },
+            {
+              "id": "casey",
+              "name": "Casey",
+              "shortName": "Ca",
+              "color": "#d95f02"
+            }
+          ],
+          "caveats": [
+            "Clone sensitivity is an agenda-design edge case, not a bug in arithmetic.",
+            "Candidate qualification rules are part of the voting system."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Convert ranks to points",
+              "detail": "Each ballot distributes descending points across its ranked candidates.",
+              "round": 0,
+              "totals": [
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 1910.0,
+                  "percent": 63.666666666666664,
+                  "status": "active",
+                  "detail": "1910 points",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 1470.0,
+                  "percent": 49.0,
+                  "status": "active",
+                  "detail": "1470 points",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 1410.0,
+                  "percent": 47.0,
+                  "status": "active",
+                  "detail": "1410 points",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "avery_prime",
+                  "label": "Avery Prime",
+                  "color": "#38bdf8",
+                  "value": 1210.0,
+                  "percent": 40.333333333333336,
+                  "status": "active",
+                  "detail": "1210 points",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [
+                {
+                  "label": "Avery loyalists",
+                  "count": 300,
+                  "from": null,
+                  "to": "avery",
+                  "color": "#1f77b4",
+                  "note": "first choice: Avery"
+                },
+                {
+                  "label": "Avery Prime loyalists",
+                  "count": 120,
+                  "from": null,
+                  "to": "avery_prime",
+                  "color": "#38bdf8",
+                  "note": "first choice: Avery Prime"
+                },
+                {
+                  "label": "Blair coalition",
+                  "count": 330,
+                  "from": null,
+                  "to": "blair",
+                  "color": "#2ca02c",
+                  "note": "first choice: Blair"
+                },
+                {
+                  "label": "Casey coalition",
+                  "count": 250,
+                  "from": null,
+                  "to": "casey",
+                  "color": "#d95f02",
+                  "note": "first choice: Casey"
+                }
+              ],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "Unranked candidates receive zero points in this demo."
+              ]
+            },
+            {
+              "title": "Sum Borda points",
+              "detail": "The candidate with the highest total point score wins.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 1910.0,
+                  "percent": 63.666666666666664,
+                  "status": "winner",
+                  "detail": "1910 points",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 1470.0,
+                  "percent": 49.0,
+                  "status": "active",
+                  "detail": "1470 points",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 1410.0,
+                  "percent": 47.0,
+                  "status": "active",
+                  "detail": "1410 points",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "avery_prime",
+                  "label": "Avery Prime",
+                  "color": "#38bdf8",
+                  "value": 1210.0,
+                  "percent": 40.333333333333336,
+                  "status": "active",
+                  "detail": "1210 points",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "Clone sensitivity is an agenda-design edge case, not a bug in arithmetic.",
+                "Candidate qualification rules are part of the voting system."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "condorcet",
+      "label": "Condorcet / Copeland Fallback",
+      "shortLabel": "Condorcet",
+      "family": "pairwise majority",
+      "description": "Every candidate is compared head-to-head. A Condorcet winner beats every other candidate; otherwise Copeland scores pairwise wins minus losses.",
+      "scenarioFit": "High-legitimacy ranked decisions where pairwise majority preference is a first-class criterion.",
+      "caveats": [
+        "A Condorcet cycle can exist: A beats B, B beats C, and C beats A.",
+        "The fallback rule must be specified before the election.",
+        "Pairwise math is auditable but harder to explain than a single pile count."
+      ],
+      "cases": [
+        {
+          "id": "pairwise-winner",
+          "label": "Pairwise winner",
+          "kind": "normal",
+          "scenario": "Blair beats each other candidate head-to-head.",
+          "edgeFocus": null,
+          "totalVoteRecords": 1000,
+          "countedVotes": 1000,
+          "thresholdLabel": "beats every rival head-to-head",
+          "winnerId": "blair",
+          "winnerName": "Blair",
+          "outcome": "Blair is the Condorcet winner.",
+          "candidates": [
+            {
+              "id": "avery",
+              "name": "Avery",
+              "shortName": "Av",
+              "color": "#1f77b4"
+            },
+            {
+              "id": "blair",
+              "name": "Blair",
+              "shortName": "Bl",
+              "color": "#2ca02c"
+            },
+            {
+              "id": "casey",
+              "name": "Casey",
+              "shortName": "Ca",
+              "color": "#d95f02"
+            },
+            {
+              "id": "devon",
+              "name": "Devon",
+              "shortName": "De",
+              "color": "#7b61ff"
+            },
+            {
+              "id": "emery",
+              "name": "Emery",
+              "shortName": "Em",
+              "color": "#e11d48"
+            }
+          ],
+          "caveats": [
+            "A pairwise winner is strong evidence of broad legitimacy."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Build pairwise matrix",
+              "detail": "Each pair of candidates is tested as a one-on-one majority contest.",
+              "round": 0,
+              "totals": [
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 4.0,
+                  "percent": 100.0,
+                  "status": "active",
+                  "detail": "4 pairwise wins, 0 losses, Copeland +4",
+                  "secondaryValue": 4.0,
+                  "secondaryLabel": "Copeland"
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 3.0,
+                  "percent": 75.0,
+                  "status": "active",
+                  "detail": "3 pairwise wins, 1 losses, Copeland +2",
+                  "secondaryValue": 2.0,
+                  "secondaryLabel": "Copeland"
+                },
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 2.0,
+                  "percent": 50.0,
+                  "status": "active",
+                  "detail": "2 pairwise wins, 2 losses, Copeland +0",
+                  "secondaryValue": 0.0,
+                  "secondaryLabel": "Copeland"
+                },
+                {
+                  "candidateId": "devon",
+                  "label": "Devon",
+                  "color": "#7b61ff",
+                  "value": 1.0,
+                  "percent": 25.0,
+                  "status": "active",
+                  "detail": "1 pairwise wins, 3 losses, Copeland -2",
+                  "secondaryValue": -2.0,
+                  "secondaryLabel": "Copeland"
+                },
+                {
+                  "candidateId": "emery",
+                  "label": "Emery",
+                  "color": "#e11d48",
+                  "value": 0.0,
+                  "percent": 0.0,
+                  "status": "active",
+                  "detail": "0 pairwise wins, 4 losses, Copeland -4",
+                  "secondaryValue": -4.0,
+                  "secondaryLabel": "Copeland"
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [
+                {
+                  "row": "avery",
+                  "col": "blair",
+                  "rowVotes": 360,
+                  "colVotes": 640,
+                  "margin": -280,
+                  "winner": "blair"
+                },
+                {
+                  "row": "avery",
+                  "col": "casey",
+                  "rowVotes": 360,
+                  "colVotes": 640,
+                  "margin": -280,
+                  "winner": "casey"
+                },
+                {
+                  "row": "avery",
+                  "col": "devon",
+                  "rowVotes": 860,
+                  "colVotes": 140,
+                  "margin": 720,
+                  "winner": "avery"
+                },
+                {
+                  "row": "avery",
+                  "col": "emery",
+                  "rowVotes": 1000,
+                  "colVotes": 0,
+                  "margin": 1000,
+                  "winner": "avery"
+                },
+                {
+                  "row": "blair",
+                  "col": "casey",
+                  "rowVotes": 660,
+                  "colVotes": 340,
+                  "margin": 320,
+                  "winner": "blair"
+                },
+                {
+                  "row": "blair",
+                  "col": "devon",
+                  "rowVotes": 860,
+                  "colVotes": 140,
+                  "margin": 720,
+                  "winner": "blair"
+                },
+                {
+                  "row": "blair",
+                  "col": "emery",
+                  "rowVotes": 1000,
+                  "colVotes": 0,
+                  "margin": 1000,
+                  "winner": "blair"
+                },
+                {
+                  "row": "casey",
+                  "col": "devon",
+                  "rowVotes": 860,
+                  "colVotes": 140,
+                  "margin": 720,
+                  "winner": "casey"
+                },
+                {
+                  "row": "casey",
+                  "col": "emery",
+                  "rowVotes": 1000,
+                  "colVotes": 0,
+                  "margin": 1000,
+                  "winner": "casey"
+                },
+                {
+                  "row": "devon",
+                  "col": "emery",
+                  "rowVotes": 1000,
+                  "colVotes": 0,
+                  "margin": 1000,
+                  "winner": "devon"
+                }
+              ],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "The matrix records margins for every head-to-head race."
+              ]
+            },
+            {
+              "title": "Condorcet winner found",
+              "detail": "One candidate beats every other candidate head-to-head.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 4.0,
+                  "percent": 100.0,
+                  "status": "winner",
+                  "detail": "4 pairwise wins, 0 losses, Copeland +4",
+                  "secondaryValue": 4.0,
+                  "secondaryLabel": "Copeland"
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 3.0,
+                  "percent": 75.0,
+                  "status": "active",
+                  "detail": "3 pairwise wins, 1 losses, Copeland +2",
+                  "secondaryValue": 2.0,
+                  "secondaryLabel": "Copeland"
+                },
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 2.0,
+                  "percent": 50.0,
+                  "status": "active",
+                  "detail": "2 pairwise wins, 2 losses, Copeland +0",
+                  "secondaryValue": 0.0,
+                  "secondaryLabel": "Copeland"
+                },
+                {
+                  "candidateId": "devon",
+                  "label": "Devon",
+                  "color": "#7b61ff",
+                  "value": 1.0,
+                  "percent": 25.0,
+                  "status": "active",
+                  "detail": "1 pairwise wins, 3 losses, Copeland -2",
+                  "secondaryValue": -2.0,
+                  "secondaryLabel": "Copeland"
+                },
+                {
+                  "candidateId": "emery",
+                  "label": "Emery",
+                  "color": "#e11d48",
+                  "value": 0.0,
+                  "percent": 0.0,
+                  "status": "active",
+                  "detail": "0 pairwise wins, 4 losses, Copeland -4",
+                  "secondaryValue": -4.0,
+                  "secondaryLabel": "Copeland"
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [
+                {
+                  "row": "avery",
+                  "col": "blair",
+                  "rowVotes": 360,
+                  "colVotes": 640,
+                  "margin": -280,
+                  "winner": "blair"
+                },
+                {
+                  "row": "avery",
+                  "col": "casey",
+                  "rowVotes": 360,
+                  "colVotes": 640,
+                  "margin": -280,
+                  "winner": "casey"
+                },
+                {
+                  "row": "avery",
+                  "col": "devon",
+                  "rowVotes": 860,
+                  "colVotes": 140,
+                  "margin": 720,
+                  "winner": "avery"
+                },
+                {
+                  "row": "avery",
+                  "col": "emery",
+                  "rowVotes": 1000,
+                  "colVotes": 0,
+                  "margin": 1000,
+                  "winner": "avery"
+                },
+                {
+                  "row": "blair",
+                  "col": "casey",
+                  "rowVotes": 660,
+                  "colVotes": 340,
+                  "margin": 320,
+                  "winner": "blair"
+                },
+                {
+                  "row": "blair",
+                  "col": "devon",
+                  "rowVotes": 860,
+                  "colVotes": 140,
+                  "margin": 720,
+                  "winner": "blair"
+                },
+                {
+                  "row": "blair",
+                  "col": "emery",
+                  "rowVotes": 1000,
+                  "colVotes": 0,
+                  "margin": 1000,
+                  "winner": "blair"
+                },
+                {
+                  "row": "casey",
+                  "col": "devon",
+                  "rowVotes": 860,
+                  "colVotes": 140,
+                  "margin": 720,
+                  "winner": "casey"
+                },
+                {
+                  "row": "casey",
+                  "col": "emery",
+                  "rowVotes": 1000,
+                  "colVotes": 0,
+                  "margin": 1000,
+                  "winner": "casey"
+                },
+                {
+                  "row": "devon",
+                  "col": "emery",
+                  "rowVotes": 1000,
+                  "colVotes": 0,
+                  "margin": 1000,
+                  "winner": "devon"
+                }
+              ],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "A pairwise winner is strong evidence of broad legitimacy."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cycle",
+          "label": "Cycle edge",
+          "kind": "edge",
+          "scenario": "The electorate forms a rock-paper-scissors loop: Avery beats Blair, Blair beats Casey, Casey beats Avery.",
+          "edgeFocus": "There is no candidate that beats every other candidate.",
+          "totalVoteRecords": 1000,
+          "countedVotes": 1000,
+          "thresholdLabel": "beats every rival head-to-head",
+          "winnerId": null,
+          "winnerName": null,
+          "outcome": "No Condorcet winner and Copeland fallback is tied.",
+          "candidates": [
+            {
+              "id": "avery",
+              "name": "Avery",
+              "shortName": "Av",
+              "color": "#1f77b4"
+            },
+            {
+              "id": "blair",
+              "name": "Blair",
+              "shortName": "Bl",
+              "color": "#2ca02c"
+            },
+            {
+              "id": "casey",
+              "name": "Casey",
+              "shortName": "Ca",
+              "color": "#d95f02"
+            }
+          ],
+          "caveats": [
+            "The fallback exposes a governance choice: break the cycle, request deliberation, or rerun.",
+            "For court-like gates, a cycle is a signal to slow down, not force a verdict."
+          ],
+          "bettingLines": [],
+          "frames": [
+            {
+              "title": "Build pairwise matrix",
+              "detail": "Each pair of candidates is tested as a one-on-one majority contest.",
+              "round": 0,
+              "totals": [
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 1.0,
+                  "percent": 50.0,
+                  "status": "active",
+                  "detail": "1 pairwise wins, 1 losses, Copeland +0",
+                  "secondaryValue": 0.0,
+                  "secondaryLabel": "Copeland"
+                },
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 1.0,
+                  "percent": 50.0,
+                  "status": "active",
+                  "detail": "1 pairwise wins, 1 losses, Copeland +0",
+                  "secondaryValue": 0.0,
+                  "secondaryLabel": "Copeland"
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 1.0,
+                  "percent": 50.0,
+                  "status": "active",
+                  "detail": "1 pairwise wins, 1 losses, Copeland +0",
+                  "secondaryValue": 0.0,
+                  "secondaryLabel": "Copeland"
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [
+                {
+                  "row": "avery",
+                  "col": "blair",
+                  "rowVotes": 667,
+                  "colVotes": 333,
+                  "margin": 334,
+                  "winner": "avery"
+                },
+                {
+                  "row": "avery",
+                  "col": "casey",
+                  "rowVotes": 334,
+                  "colVotes": 666,
+                  "margin": -332,
+                  "winner": "casey"
+                },
+                {
+                  "row": "blair",
+                  "col": "casey",
+                  "rowVotes": 667,
+                  "colVotes": 333,
+                  "margin": 334,
+                  "winner": "blair"
+                }
+              ],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "The matrix records margins for every head-to-head race."
+              ]
+            },
+            {
+              "title": "No Condorcet winner",
+              "detail": "The pairwise graph cycles, so the fallback score is shown without pretending there is a clean majority winner.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 1.0,
+                  "percent": 50.0,
+                  "status": "active",
+                  "detail": "1 pairwise wins, 1 losses, Copeland +0",
+                  "secondaryValue": 0.0,
+                  "secondaryLabel": "Copeland"
+                },
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 1.0,
+                  "percent": 50.0,
+                  "status": "active",
+                  "detail": "1 pairwise wins, 1 losses, Copeland +0",
+                  "secondaryValue": 0.0,
+                  "secondaryLabel": "Copeland"
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 1.0,
+                  "percent": 50.0,
+                  "status": "active",
+                  "detail": "1 pairwise wins, 1 losses, Copeland +0",
+                  "secondaryValue": 0.0,
+                  "secondaryLabel": "Copeland"
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [
+                {
+                  "row": "avery",
+                  "col": "blair",
+                  "rowVotes": 667,
+                  "colVotes": 333,
+                  "margin": 334,
+                  "winner": "avery"
+                },
+                {
+                  "row": "avery",
+                  "col": "casey",
+                  "rowVotes": 334,
+                  "colVotes": 666,
+                  "margin": -332,
+                  "winner": "casey"
+                },
+                {
+                  "row": "blair",
+                  "col": "casey",
+                  "rowVotes": 667,
+                  "colVotes": 333,
+                  "margin": 334,
+                  "winner": "blair"
+                }
+              ],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "The fallback exposes a governance choice: break the cycle, request deliberation, or rerun.",
+                "For court-like gates, a cycle is a signal to slow down, not force a verdict."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wagered-magnitude",
+      "label": "Wagered Magnitude Voting",
+      "shortLabel": "Wager",
+      "family": "dollar-weighted signal",
+      "description": "All 1,000 records vote, but each record carries a dollar-backed magnitude. Raw dollars can be counted directly or compared against capped/square-root damped voice.",
+      "scenarioFit": "Escrow-backed public support, prediction-style conviction signals, or funding readiness gates where intensity is meaningful but capture risk is high.",
+      "caveats": [
+        "Dollar magnitude is not democratic equality; it is an intensity or funding signal.",
+        "Raw dollar weighting can let a tiny wealthy bloc dominate a large public majority.",
+        "A court-like system should keep wagered support separate from reviewer verdict votes."
+      ],
+      "cases": [
+        {
+          "id": "high-intensity-minority",
+          "label": "High-intensity minority",
+          "kind": "normal",
+          "scenario": "A smaller Avery bloc wins the raw dollar-weighted tally by attaching larger dollar amounts to each record.",
+          "edgeFocus": null,
+          "totalVoteRecords": 1000,
+          "countedVotes": 1000,
+          "thresholdLabel": "highest raw dollar-weighted total",
+          "winnerId": "avery",
+          "winnerName": "Avery",
+          "outcome": "Avery wins under raw dollars; square-root comparison winner: Blair.",
+          "candidates": [
+            {
+              "id": "avery",
+              "name": "Avery",
+              "shortName": "Av",
+              "color": "#1f77b4"
+            },
+            {
+              "id": "blair",
+              "name": "Blair",
+              "shortName": "Bl",
+              "color": "#2ca02c"
+            },
+            {
+              "id": "casey",
+              "name": "Casey",
+              "shortName": "Ca",
+              "color": "#d95f02"
+            },
+            {
+              "id": "devon",
+              "name": "Devon",
+              "shortName": "De",
+              "color": "#7b61ff"
+            },
+            {
+              "id": "emery",
+              "name": "Emery",
+              "shortName": "Em",
+              "color": "#e11d48"
+            }
+          ],
+          "caveats": [
+            "This is appropriate only if dollars represent the thing being allocated, such as escrow readiness.",
+            "The same 1,000 people are counted; the difference is how much magnitude each record carries."
+          ],
+          "bettingLines": [
+            {
+              "id": "raw-over-under",
+              "label": "Avery raw dollar-voice O/U",
+              "lineKind": "over_under",
+              "market": "candidate raw dollar-backed vote weight",
+              "line": 1830.0,
+              "actual": 2080.0,
+              "overOrFavorite": "over",
+              "underOrUnderdog": "under",
+              "coveredBy": "over",
+              "margin": 250.0,
+              "note": "A market-style over/under on the leading candidate's raw dollar-weighted support."
+            },
+            {
+              "id": "favorite-spread",
+              "label": "Avery spread vs Blair",
+              "lineKind": "spread",
+              "market": "raw dollar-voice margin",
+              "line": 312.0,
+              "actual": 520.0,
+              "overOrFavorite": "Avery",
+              "underOrUnderdog": "Blair",
+              "coveredBy": "Avery",
+              "margin": 208.0,
+              "note": "The favorite covers when the raw dollar margin exceeds the quoted spread."
+            },
+            {
+              "id": "quadratic-swing",
+              "label": "raw-vs-quadratic swing",
+              "lineKind": "model_compare",
+              "market": "damped voice margin after sqrt cost",
+              "line": 0.0,
+              "actual": -165.27536750180673,
+              "overOrFavorite": "Avery",
+              "underOrUnderdog": "Blair",
+              "coveredBy": "Blair",
+              "margin": -165.27536750180673,
+              "note": "A zero line asks which side leads after square-root damping instead of raw dollar weighting."
+            }
+          ],
+          "frames": [
+            {
+              "title": "Collect 1,000 wagered records",
+              "detail": "Each vote record names a candidate and attaches a dollar-backed magnitude.",
+              "round": 0,
+              "totals": [
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 2080.0,
+                  "percent": 46.017699115044245,
+                  "status": "active",
+                  "detail": "2080 raw dollar-voice",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 1560.0,
+                  "percent": 34.51327433628319,
+                  "status": "active",
+                  "detail": "1560 raw dollar-voice",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 880.0,
+                  "percent": 19.469026548672566,
+                  "status": "active",
+                  "detail": "880 raw dollar-voice",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [
+                {
+                  "label": "Avery high-intensity",
+                  "count": 260,
+                  "from": null,
+                  "to": "avery",
+                  "color": "#1f77b4",
+                  "note": "260 records x $8"
+                },
+                {
+                  "label": "Blair broad-support",
+                  "count": 520,
+                  "from": null,
+                  "to": "blair",
+                  "color": "#2ca02c",
+                  "note": "520 records x $3"
+                },
+                {
+                  "label": "Casey medium",
+                  "count": 220,
+                  "from": null,
+                  "to": "casey",
+                  "color": "#d95f02",
+                  "note": "220 records x $4"
+                }
+              ],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "The count remains 1,000; the dollar field changes the weight of each record."
+              ]
+            },
+            {
+              "title": "Raw dollar-weighted tally",
+              "detail": "The direct rule sums dollars behind each candidate.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 2080.0,
+                  "percent": 46.017699115044245,
+                  "status": "winner",
+                  "detail": "2080 raw dollar-voice",
+                  "secondaryValue": 735.3910524340095,
+                  "secondaryLabel": "sqrt-damped voice"
+                },
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 1560.0,
+                  "percent": 34.51327433628319,
+                  "status": "active",
+                  "detail": "1560 raw dollar-voice",
+                  "secondaryValue": 900.6664199358162,
+                  "secondaryLabel": "sqrt-damped voice"
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 880.0,
+                  "percent": 19.469026548672566,
+                  "status": "active",
+                  "detail": "880 raw dollar-voice",
+                  "secondaryValue": 440.0,
+                  "secondaryLabel": "sqrt-damped voice"
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "This is appropriate only if dollars represent the thing being allocated, such as escrow readiness.",
+                "The same 1,000 people are counted; the difference is how much magnitude each record carries."
+              ]
+            },
+            {
+              "title": "Square-root damped comparison",
+              "detail": "A quadratic-style comparison converts each record's dollars to sqrt(dollars) voice before aggregation.",
+              "round": 2,
+              "totals": [
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 900.6664199358162,
+                  "percent": 43.383501272134964,
+                  "status": "winner",
+                  "detail": "900.67 sqrt voice",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 735.3910524340095,
+                  "percent": 35.422480457371854,
+                  "status": "active",
+                  "detail": "735.39 sqrt voice",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "casey",
+                  "label": "Casey",
+                  "color": "#d95f02",
+                  "value": 440.0,
+                  "percent": 21.194018270493192,
+                  "status": "active",
+                  "detail": "440 sqrt voice",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "This frame is a policy comparison, not the raw-rule winner.",
+                "Damping preserves intensity while limiting wealth dominance."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "whale-dominance",
+          "label": "Whale dominance edge",
+          "kind": "edge",
+          "scenario": "Twenty high-dollar records beat 980 low-dollar records under raw weighting.",
+          "edgeFocus": "Dollar-backed voting can convert wealth concentration into governance control.",
+          "totalVoteRecords": 1000,
+          "countedVotes": 1000,
+          "thresholdLabel": "highest raw dollar-weighted total",
+          "winnerId": "avery",
+          "winnerName": "Avery",
+          "outcome": "Avery wins under raw dollars; square-root comparison winner: Blair.",
+          "candidates": [
+            {
+              "id": "avery",
+              "name": "Avery",
+              "shortName": "Av",
+              "color": "#1f77b4"
+            },
+            {
+              "id": "blair",
+              "name": "Blair",
+              "shortName": "Bl",
+              "color": "#2ca02c"
+            },
+            {
+              "id": "casey",
+              "name": "Casey",
+              "shortName": "Ca",
+              "color": "#d95f02"
+            },
+            {
+              "id": "devon",
+              "name": "Devon",
+              "shortName": "De",
+              "color": "#7b61ff"
+            },
+            {
+              "id": "emery",
+              "name": "Emery",
+              "shortName": "Em",
+              "color": "#e11d48"
+            }
+          ],
+          "caveats": [
+            "Raw dollars pick Avery; square-root damping would pick Blair in the comparison frame.",
+            "Caps, matching funds, per-person limits, or quadratic costs are policy choices, not UI details."
+          ],
+          "bettingLines": [
+            {
+              "id": "raw-over-under",
+              "label": "Avery raw dollar-voice O/U",
+              "lineKind": "over_under",
+              "market": "candidate raw dollar-backed vote weight",
+              "line": 3000.0,
+              "actual": 5000.0,
+              "overOrFavorite": "over",
+              "underOrUnderdog": "under",
+              "coveredBy": "over",
+              "margin": 2000.0,
+              "note": "A market-style over/under on the leading candidate's raw dollar-weighted support."
+            },
+            {
+              "id": "favorite-spread",
+              "label": "Avery spread vs Blair",
+              "lineKind": "spread",
+              "market": "raw dollar-voice margin",
+              "line": 1236.0,
+              "actual": 2060.0,
+              "overOrFavorite": "Avery",
+              "underOrUnderdog": "Blair",
+              "coveredBy": "Avery",
+              "margin": 824.0,
+              "note": "The favorite covers when the raw dollar margin exceeds the quoted spread."
+            },
+            {
+              "id": "quadratic-swing",
+              "label": "raw-vs-quadratic swing",
+              "lineKind": "model_compare",
+              "market": "damped voice margin after sqrt cost",
+              "line": 0.0,
+              "actual": -1381.1820254006618,
+              "overOrFavorite": "Avery",
+              "underOrUnderdog": "Blair",
+              "coveredBy": "Blair",
+              "margin": -1381.1820254006618,
+              "note": "A zero line asks which side leads after square-root damping instead of raw dollar weighting."
+            }
+          ],
+          "frames": [
+            {
+              "title": "Collect 1,000 wagered records",
+              "detail": "Each vote record names a candidate and attaches a dollar-backed magnitude.",
+              "round": 0,
+              "totals": [
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 5000.0,
+                  "percent": 62.97229219143577,
+                  "status": "active",
+                  "detail": "5000 raw dollar-voice",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 2940.0,
+                  "percent": 37.02770780856423,
+                  "status": "active",
+                  "detail": "2940 raw dollar-voice",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [
+                {
+                  "label": "20 high-dollar Avery sponsors",
+                  "count": 20,
+                  "from": null,
+                  "to": "avery",
+                  "color": "#1f77b4",
+                  "note": "20 records x $250"
+                },
+                {
+                  "label": "980 low-dollar Blair supporters",
+                  "count": 980,
+                  "from": null,
+                  "to": "blair",
+                  "color": "#2ca02c",
+                  "note": "980 records x $3"
+                }
+              ],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "The count remains 1,000; the dollar field changes the weight of each record."
+              ]
+            },
+            {
+              "title": "Raw dollar-weighted tally",
+              "detail": "The direct rule sums dollars behind each candidate.",
+              "round": 1,
+              "totals": [
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 5000.0,
+                  "percent": 62.97229219143577,
+                  "status": "winner",
+                  "detail": "5000 raw dollar-voice",
+                  "secondaryValue": 316.2277660168379,
+                  "secondaryLabel": "sqrt-damped voice"
+                },
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 2940.0,
+                  "percent": 37.02770780856423,
+                  "status": "active",
+                  "detail": "2940 raw dollar-voice",
+                  "secondaryValue": 1697.4097914174997,
+                  "secondaryLabel": "sqrt-damped voice"
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "Raw dollars pick Avery; square-root damping would pick Blair in the comparison frame.",
+                "Caps, matching funds, per-person limits, or quadratic costs are policy choices, not UI details."
+              ]
+            },
+            {
+              "title": "Square-root damped comparison",
+              "detail": "A quadratic-style comparison converts each record's dollars to sqrt(dollars) voice before aggregation.",
+              "round": 2,
+              "totals": [
+                {
+                  "candidateId": "blair",
+                  "label": "Blair",
+                  "color": "#2ca02c",
+                  "value": 1697.4097914174997,
+                  "percent": 84.2956958739011,
+                  "status": "winner",
+                  "detail": "1697.41 sqrt voice",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                },
+                {
+                  "candidateId": "avery",
+                  "label": "Avery",
+                  "color": "#1f77b4",
+                  "value": 316.2277660168379,
+                  "percent": 15.704304126098906,
+                  "status": "active",
+                  "detail": "316.23 sqrt voice",
+                  "secondaryValue": null,
+                  "secondaryLabel": null
+                }
+              ],
+              "packets": [],
+              "transfers": [],
+              "pairwise": [],
+              "active": [],
+              "eliminated": [],
+              "exhausted": 0,
+              "threshold": null,
+              "notes": [
+                "This frame is a policy comparison, not the raw-rule winner.",
+                "Damping preserves intensity while limiting wealth dominance."
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}</script>
+<div class="app">
+  <header class="topbar">
+    <div>
+      <h1 id="labTitle">Voting Algorithm Lab</h1>
+      <p class="subtitle" id="labSubtitle"></p>
+    </div>
+    <div class="metric">
+      <strong id="voteRecords">1,000</strong>
+      <span>vote records per scenario</span>
+    </div>
+  </header>
+  <section class="requirements" id="requirements"></section>
+  <div class="workspace">
+    <nav class="system-nav">
+      <div class="system-tabs" id="systemTabs"></div>
+    </nav>
+    <main class="main">
+      <div class="case-tabs" id="caseTabs"></div>
+      <section class="summary-band">
+        <div class="summary">
+          <p class="eyebrow" id="systemFamily"></p>
+          <h2 id="systemName"></h2>
+          <p id="systemDescription"></p>
+          <p id="scenarioFit"></p>
+          <p class="edge" id="edgeFocus"></p>
+        </div>
+        <div class="outcome">
+          <p class="eyebrow">Outcome</p>
+          <strong id="caseOutcome"></strong>
+          <p id="thresholdLabel"></p>
+        </div>
+      </section>
+      <section class="visual-grid">
+        <div class="arena">
+          <div class="frame-title-row">
+            <div>
+              <h3 id="frameTitle"></h3>
+              <p id="frameDetail"></p>
+            </div>
+            <div class="round-pill" id="roundPill"></div>
+          </div>
+          <div class="bar-stack" id="barStack"></div>
+          <div class="packet-lane" id="packetLane"></div>
+          <div class="controls">
+            <button class="icon-btn" id="prevBtn" title="Previous frame" aria-label="Previous frame">&lt;</button>
+            <button class="icon-btn" id="playBtn" title="Play or pause" aria-label="Play or pause">&gt;</button>
+            <button class="icon-btn" id="nextBtn" title="Next frame" aria-label="Next frame">&gt;</button>
+            <input id="scrubber" type="range" min="0" max="0" value="0" aria-label="Frame">
+            <span class="frame-counter" id="frameCounter"></span>
+          </div>
+        </div>
+        <aside class="side">
+          <section class="panel-section">
+            <h4>Frame Notes</h4>
+            <ul class="note-list" id="frameNotes"></ul>
+          </section>
+          <section class="panel-section">
+            <h4>Transfers</h4>
+            <div class="transfer-list" id="transferList"></div>
+          </section>
+          <section class="panel-section">
+            <h4>Pairwise</h4>
+            <div class="pairwise-list" id="pairwiseList"></div>
+          </section>
+          <section class="panel-section" id="bettingSection">
+            <h4>Betting Lines</h4>
+            <div class="bet-list" id="bettingList"></div>
+          </section>
+          <section class="panel-section">
+            <h4>Case Caveats</h4>
+            <ul class="caveat-list" id="caseCaveats"></ul>
+          </section>
+        </aside>
+      </section>
+    </main>
+  </div>
+</div>
+<script>
+const LAB = JSON.parse(document.getElementById("voting-lab-payload").textContent);
+const state = { system: 0, case: 0, frame: 0, playing: false, timer: null };
+const els = {
+  title: document.getElementById("labTitle"),
+  subtitle: document.getElementById("labSubtitle"),
+  voteRecords: document.getElementById("voteRecords"),
+  requirements: document.getElementById("requirements"),
+  systemTabs: document.getElementById("systemTabs"),
+  caseTabs: document.getElementById("caseTabs"),
+  family: document.getElementById("systemFamily"),
+  systemName: document.getElementById("systemName"),
+  systemDescription: document.getElementById("systemDescription"),
+  scenarioFit: document.getElementById("scenarioFit"),
+  edgeFocus: document.getElementById("edgeFocus"),
+  outcome: document.getElementById("caseOutcome"),
+  threshold: document.getElementById("thresholdLabel"),
+  frameTitle: document.getElementById("frameTitle"),
+  frameDetail: document.getElementById("frameDetail"),
+  roundPill: document.getElementById("roundPill"),
+  barStack: document.getElementById("barStack"),
+  packetLane: document.getElementById("packetLane"),
+  notes: document.getElementById("frameNotes"),
+  transfers: document.getElementById("transferList"),
+  pairwise: document.getElementById("pairwiseList"),
+  bettingSection: document.getElementById("bettingSection"),
+  betting: document.getElementById("bettingList"),
+  caveats: document.getElementById("caseCaveats"),
+  prev: document.getElementById("prevBtn"),
+  play: document.getElementById("playBtn"),
+  next: document.getElementById("nextBtn"),
+  scrubber: document.getElementById("scrubber"),
+  counter: document.getElementById("frameCounter")
+};
+
+function fmt(value) {
+  if (!Number.isFinite(value)) return "";
+  if (Math.abs(value - Math.round(value)) < 1e-9) return String(Math.round(value));
+  return value.toFixed(2);
+}
+
+function system() { return LAB.systems[state.system]; }
+function kase() { return system().cases[state.case]; }
+function frame() { return kase().frames[state.frame]; }
+
+function candidateName(id) {
+  const c = kase().candidates.find(x => x.id === id);
+  return c ? c.name : (id || "exhausted");
+}
+
+function renderShell() {
+  els.title.textContent = LAB.title;
+  els.subtitle.textContent = LAB.subtitle;
+  els.voteRecords.textContent = LAB.totalVoteRecords.toLocaleString();
+  els.requirements.innerHTML = LAB.requirements.map(req => `
+    <article class="req">
+      <b>${req.label}</b>
+      <strong>${req.value}</strong>
+      <p>${req.detail}</p>
+    </article>
+  `).join("");
+  renderSystemTabs();
+  renderAll();
+}
+
+function renderSystemTabs() {
+  els.systemTabs.innerHTML = LAB.systems.map((sys, index) => `
+    <button class="system-tab ${index === state.system ? "active" : ""}" data-system="${index}">
+      <span>
+        <span class="name">${sys.shortLabel}</span>
+        <span class="family">${sys.family}</span>
+      </span>
+      <span class="count">${sys.cases.length}</span>
+    </button>
+  `).join("");
+  els.systemTabs.querySelectorAll("button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.system = Number(btn.dataset.system);
+      state.case = 0;
+      state.frame = 0;
+      stop();
+      renderAll();
+    });
+  });
+}
+
+function renderCaseTabs() {
+  els.caseTabs.innerHTML = system().cases.map((c, index) => `
+    <button class="case-tab ${index === state.case ? "active" : ""}" data-case="${index}">
+      <span>${c.label}</span>
+      <span class="kind">${c.kind}</span>
+    </button>
+  `).join("");
+  els.caseTabs.querySelectorAll("button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.case = Number(btn.dataset.case);
+      state.frame = 0;
+      stop();
+      renderAll();
+    });
+  });
+}
+
+function renderAll() {
+  renderSystemTabs();
+  renderCaseTabs();
+  const sys = system();
+  const c = kase();
+  els.family.textContent = sys.family;
+  els.systemName.textContent = sys.label;
+  els.systemDescription.textContent = sys.description;
+  els.scenarioFit.textContent = sys.scenarioFit;
+  els.edgeFocus.textContent = c.edgeFocus || "";
+  els.edgeFocus.classList.toggle("visible", Boolean(c.edgeFocus));
+  els.outcome.textContent = c.outcome;
+  els.threshold.textContent = c.thresholdLabel ? `Threshold: ${c.thresholdLabel}` : "Threshold: none";
+  els.caveats.innerHTML = c.caveats.map(x => `<li>${x}</li>`).join("") || `<li class="empty">No special caveats.</li>`;
+  els.scrubber.max = Math.max(0, c.frames.length - 1);
+  renderFrame();
+}
+
+function renderFrame() {
+  const c = kase();
+  const f = frame();
+  els.frameTitle.textContent = f.title;
+  els.frameDetail.textContent = f.detail;
+  els.roundPill.textContent = `round ${f.round}`;
+  els.scrubber.value = state.frame;
+  els.counter.textContent = `${state.frame + 1} / ${c.frames.length}`;
+  els.play.textContent = state.playing ? "||" : ">";
+  renderBars(f);
+  renderPackets(f);
+  renderNotes(f);
+  renderTransfers(f);
+  renderPairwise(f);
+  renderBetting(c);
+}
+
+function renderBars(f) {
+  const denomBar = f.totals.find(b => b.percent > 0 && b.value > 0);
+  const denom = denomBar ? denomBar.value * 100 / denomBar.percent : Math.max(1, ...f.totals.map(b => b.value));
+  const thresholdPct = f.threshold == null ? null : Math.max(0, Math.min(100, f.threshold * 100 / Math.max(denom, f.threshold)));
+  els.barStack.innerHTML = `
+    ${thresholdPct == null ? "" : `<div class="threshold" style="left:${thresholdPct}%"><span>${fmt(f.threshold)}</span></div>`}
+    ${f.totals.map((bar, index) => `
+      <div class="bar-row ${bar.status}" style="--row:${index}">
+        <div class="cand"><span class="swatch" style="background:${bar.color}"></span><span>${bar.label}</span></div>
+        <div class="track"><div class="fill" data-width="${Math.max(0, Math.min(100, bar.percent))}" style="background:${bar.color}"></div></div>
+        <div class="bar-value">${bar.detail}${bar.secondaryLabel ? `<br>${bar.secondaryLabel}: ${fmt(bar.secondaryValue)}` : ""}</div>
+      </div>
+    `).join("")}
+  `;
+  requestAnimationFrame(() => {
+    els.barStack.querySelectorAll(".fill").forEach(fill => {
+      fill.style.width = `${fill.dataset.width}%`;
+    });
+  });
+}
+
+function renderPackets(f) {
+  els.packetLane.innerHTML = f.packets.map((p, index) => `
+    <div class="packet" style="--packet-color:${p.color}; animation-delay:${index * 80}ms">
+      <span class="dot"></span>
+      <strong>${p.count.toLocaleString()} ${p.label}</strong>
+      <span>${p.note}</span>
+    </div>
+  `).join("");
+}
+
+function renderNotes(f) {
+  els.notes.innerHTML = f.notes.map(n => `<li>${n}</li>`).join("") || `<li class="empty">No frame-specific notes.</li>`;
+}
+
+function renderTransfers(f) {
+  els.transfers.innerHTML = f.transfers.map(t => `
+    <div class="transfer">
+      <strong>${candidateName(t.from)} -> ${t.to ? candidateName(t.to) : "exhausted"}</strong>
+      <span>${t.count.toLocaleString()} records, ${t.label}</span>
+    </div>
+  `).join("") || `<div class="empty">No transfers in this frame.</div>`;
+}
+
+function renderPairwise(f) {
+  els.pairwise.innerHTML = f.pairwise.map(p => `
+    <div class="pair">
+      <strong>${candidateName(p.row)} vs ${candidateName(p.col)}</strong>
+      <span>${p.rowVotes}-${p.colVotes}; margin ${p.margin}; winner ${p.winner ? candidateName(p.winner) : "tie"}</span>
+    </div>
+  `).join("") || `<div class="empty">No pairwise matrix for this system.</div>`;
+}
+
+function renderBetting(c) {
+  const lines = c.bettingLines || [];
+  els.bettingSection.style.display = lines.length ? "" : "none";
+  els.betting.innerHTML = lines.map(line => `
+    <div class="bet">
+      <strong>${line.label}</strong>
+      <span>${line.lineKind}: line ${fmt(line.line)}, actual ${fmt(line.actual)}, covered by ${line.coveredBy}</span>
+      <span>${line.note}</span>
+    </div>
+  `).join("");
+}
+
+function step(delta) {
+  const max = kase().frames.length - 1;
+  state.frame = Math.max(0, Math.min(max, state.frame + delta));
+  renderFrame();
+}
+
+function play() {
+  if (state.playing) return;
+  state.playing = true;
+  els.play.textContent = "||";
+  state.timer = setInterval(() => {
+    if (state.frame >= kase().frames.length - 1) {
+      state.frame = 0;
+    } else {
+      state.frame += 1;
+    }
+    renderFrame();
+  }, 1450);
+}
+
+function stop() {
+  state.playing = false;
+  if (state.timer) clearInterval(state.timer);
+  state.timer = null;
+  els.play.textContent = ">";
+}
+
+els.prev.addEventListener("click", () => { stop(); step(-1); });
+els.next.addEventListener("click", () => { stop(); step(1); });
+els.play.addEventListener("click", () => state.playing ? stop() : play());
+els.scrubber.addEventListener("input", () => {
+  stop();
+  state.frame = Number(els.scrubber.value);
+  renderFrame();
+});
+window.addEventListener("keydown", event => {
+  if (event.key === "ArrowLeft") { stop(); step(-1); }
+  if (event.key === "ArrowRight") { stop(); step(1); }
+  if (event.key === " ") { event.preventDefault(); state.playing ? stop() : play(); }
+});
+
+renderShell();
+</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const pageTitle = title === 'Discrete Event Systems' ? title : `${title} · Discrete Event Systems`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const path = Astro.url.pathname;
+
+const nav = [
+  { href: '/simulations/', label: 'Simulations' },
+  { href: '/games/', label: 'Games' },
+  { href: 'https://github.com/discrete-event-systems', label: 'GitHub', external: true },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#07100f" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; base-uri 'self'; connect-src 'self'; form-action 'self'; frame-src 'self' blob:; img-src 'self' data: blob:; object-src 'none'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; upgrade-insecure-requests"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Discrete Event Systems" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>{pageTitle}</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <nav class="nav shell" aria-label="Primary">
+        <a class="brand" href="/" aria-label="Discrete Event Systems home">
+          <span class="brand-mark" aria-hidden="true">Δt</span>
+          <span>Discrete Event Systems</span>
+        </a>
+        <div class="nav-links">
+          {
+            nav.map((item) => (
+              <a
+                href={item.href}
+                aria-current={!item.external && path.startsWith(item.href) ? 'page' : undefined}
+                target={item.external ? '_blank' : undefined}
+                rel={item.external ? 'noreferrer' : undefined}
+              >
+                {item.label}
+              </a>
+            ))
+          }
+        </div>
+      </nav>
+    </header>
+    <main id="main">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="footer-inner shell">
+        <p>Open simulation artifacts, isolated in your browser.</p>
+        <div class="footer-links">
+          <a href="https://github.com/discrete-event-systems">Source</a>
+          <a href="https://github.com/discrete-event-systems/discrete-event-systems.github.io/security/policy">Security</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
