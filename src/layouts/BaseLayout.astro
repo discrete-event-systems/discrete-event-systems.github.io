@@ -14,6 +14,7 @@ const path = Astro.url.pathname;
 const nav = [
   { href: '/simulations/', label: 'Simulations' },
   { href: '/games/', label: 'Games' },
+  { href: '/clients/', label: 'Integrate' },
   { href: 'https://github.com/discrete-event-systems', label: 'GitHub', external: true },
 ];
 ---
@@ -71,6 +72,7 @@ const nav = [
       <div class="footer-inner shell">
         <p>Open simulation artifacts, isolated in your browser.</p>
         <div class="footer-links">
+          <a href="/clients/">Integrate</a>
           <a href="https://github.com/discrete-event-systems">Source</a>
           <a href="https://github.com/discrete-event-systems/discrete-event-systems.github.io/security/policy">Security</a>
         </div>
