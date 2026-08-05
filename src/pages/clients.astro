@@ -1,0 +1,59 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+const samples=[
+ {id:'typescript',label:'TypeScript / HTTP',file:'solve.ts',code:`const solve = await fetch(baseUrl + "/des/api/v1/solve", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({
+    model: "routing",
+    vehicles: 4,
+    stops,
+    objective: "minimize-total-distance",
+  }),
+}).then((response) => response.json());
+
+const result = await fetch(
+  baseUrl + "/des/api/v1/solve/" + solve.id,
+).then((response) => response.json());`,note:'The canonical public route is mounted below /des; the gateway owns the prefix and the application owns the API.'},
+ {id:'curl',label:'curl',file:'catalog.sh',code:`curl --fail-with-body \
+  https://example.com/des/api/v1/catalog
+
+curl --fail-with-body \
+  -X POST https://example.com/des/api/v1/solve \
+  -H "content-type: application/json" \
+  --data-binary @routing-request.json`,note:'The catalog exposes the current model and route taxonomy before a caller submits work.'},
+ {id:'json',label:'Run document JSON',file:'run.json',code:`{
+  "model": "fel-elevator",
+  "seed": 42017,
+  "horizon": 86400,
+  "parameters": {
+    "cars": 6,
+    "floors": 40,
+    "arrivalRate": 0.18
+  },
+  "artifacts": ["timeline", "utilization", "wait-times"]
+}`,note:'Stable run and artifact routes make generated outputs referenceable without coupling callers to database tables.'},
+ {id:'mcp',label:'MCP tool call',file:'mcp.json',code:`{
+  "name": "des_run_simulation",
+  "arguments": {
+    "model": "fel-elevator",
+    "seed": 42017,
+    "parameters": {
+      "cars": 6,
+      "floors": 40
+    }
+  }
+}`,note:'The MCP example represents the agent-facing boundary; a dedicated public polyglot client repository is still pending.'},
+];
+---
+<BaseLayout title="Integrate" description="HTTP, run-document, and MCP integration examples for Discrete Event Systems.">
+  <section class="clients-hero shell"><p class="kicker">API · run documents · MCP</p><h1>Systems move in events. Integrations should move in explicit contracts.</h1><p>The canonical DES application owns machine-readable catalogs, solve requests, stable run routes, and artifacts below <code>/des</code>. Agent tools sit beside that HTTP surface rather than silently inventing simulation semantics.</p><div class="facts"><span>Canonical prefix: /des</span><span>Stable run and artifact IDs</span><span>No dedicated client package yet</span></div></section>
+
+  <section class="client-grid shell" data-client-grid><div class="explain"><p class="kicker">Choose an integration</p><h2>Inspect the catalog, submit a solve, or invoke a bounded tool.</h2><p>These examples are grounded in the current <code>des-web.rs</code> route contract and public MCP architecture. They are labeled as integrations—not as a client matrix that does not yet exist.</p><div class="links"><a href="https://github.com/discrete-event-systems/des-web.rs">des-web.rs ↗</a><a href="https://github.com/discrete-event-systems/des-mcp-server.rs">des-mcp-server.rs ↗</a></div></div><div class="workbench"><div class="toolbar"><label><span>Language</span><select aria-label="Select client language" data-language>{samples.map((sample,index)=><option value={sample.id} selected={index===0}>{sample.label}</option>)}</select></label><code data-filename>{samples[0]?.file ?? 'solve.ts'}</code><button type="button" data-copy>Copy</button></div>{samples.map((sample,index)=><article data-sample={sample.id} data-file={sample.file} hidden={index!==0}><pre tabindex="0"><code>{sample.code}</code></pre><p>{sample.note}</p></article>)}</div></section>
+
+  <section class="boundary shell"><div><p class="kicker">Ownership boundary</p><h2>The app owns routes. Engines own simulation behavior. Infrastructure owns ingress.</h2></div><div class="steps"><span>catalog</span><b>→</b><span>request</span><b>→</b><span>engine</span><b>→</b><span>run ID</span><b>→</b><span>artifact</span></div><p>This keeps public URLs stable while model implementations, Kubernetes deployment, and compatibility redirects evolve independently.</p></section>
+
+  <script is:inline>document.querySelectorAll('[data-client-grid]').forEach((root)=>{const select=root.querySelector('[data-language]');const filename=root.querySelector('[data-filename]');const copy=root.querySelector('[data-copy]');const panels=[...root.querySelectorAll('[data-sample]')];const show=(id)=>panels.forEach((panel)=>{const active=panel.dataset.sample===id;panel.hidden=!active;if(active)filename.textContent=panel.dataset.file||''});select?.addEventListener('change',(event)=>show(event.target.value));copy?.addEventListener('click',async()=>{const active=panels.find((panel)=>!panel.hidden);const text=active?.querySelector('code')?.textContent||'';try{await navigator.clipboard.writeText(text);copy.textContent='Copied'}catch{active?.querySelector('pre')?.focus();copy.textContent='Select code'}setTimeout(()=>copy.textContent='Copy',1200)})});</script>
+</BaseLayout>
+
+<style>.clients-hero{padding:clamp(5rem,12vw,10rem) 0 4rem}.kicker{margin:0;color:var(--accent);font:800 .72rem/1 var(--font-mono);letter-spacing:.16em;text-transform:uppercase}.clients-hero h1{max-width:15ch;margin:.8rem 0 1.2rem;font-size:clamp(3rem,8vw,6.7rem);line-height:.88;letter-spacing:-.075em}.clients-hero>p:not(.kicker){max-width:52rem;color:var(--muted);font-size:1.1rem}.facts{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:2rem}.facts span{padding:.55rem .7rem;border:1px solid var(--line);border-radius:999px;background:var(--surface-2);font-size:.76rem}.client-grid{display:grid;grid-template-columns:minmax(0,.75fr) minmax(31rem,1.25fr);gap:clamp(2rem,7vw,6rem);align-items:center;margin:4rem auto 9rem}.explain h2,.boundary h2{margin:.55rem 0 1rem;font-size:clamp(2.3rem,6vw,4.8rem);line-height:.94;letter-spacing:-.06em}.explain>p:not(.kicker),.boundary>p{color:var(--muted)}.links{display:flex;gap:1rem;flex-wrap:wrap;margin-top:1.2rem}.links a{color:var(--accent);font-weight:800;text-decoration:none}.workbench{overflow:hidden;border:1px solid #ffffff24;border-radius:1.35rem;background:#07101e;box-shadow:0 34px 100px #0008}.toolbar{display:flex;gap:.8rem;align-items:end;padding:.9rem 1rem;border-bottom:1px solid #ffffff17;background:#0e1829}.toolbar label{display:grid;gap:.25rem}.toolbar label span{color:#94a3b8;font:700 .62rem/1 ui-monospace,monospace;letter-spacing:.12em;text-transform:uppercase}.toolbar select,.toolbar button{border:1px solid #ffffff28;border-radius:.6rem;background:#131f32;color:white;padding:.5rem .65rem;font:inherit}.toolbar button{margin-left:auto;cursor:pointer}.toolbar>code{align-self:center;color:#94a3b8;font-size:.76rem}.workbench pre{overflow:auto;min-height:23rem;max-height:31rem;margin:0;padding:1.3rem;color:#d1fae5;font:500 .84rem/1.72 ui-monospace,monospace;white-space:pre}.workbench article>p{margin:0;padding:.8rem 1.3rem 1rem;border-top:1px solid #ffffff15;color:#94a3b8;font-size:.8rem}.boundary{display:grid;grid-template-columns:.8fr 1.2fr;gap:1rem 4rem;align-items:end;margin-bottom:8rem;padding:clamp(2rem,6vw,5rem);border:1px solid var(--line);border-radius:1.6rem;background:var(--surface-2)}.boundary>p{grid-column:2}.steps{display:flex;gap:.55rem;align-items:center;flex-wrap:wrap}.steps span{padding:.65rem .8rem;border:1px solid var(--line);border-radius:.65rem;font:650 .76rem/1 var(--font-mono)}.steps b{color:var(--accent)}@media(max-width:900px){.client-grid,.boundary{grid-template-columns:1fr}.boundary>p{grid-column:1}}@media(max-width:560px){.toolbar{align-items:stretch;flex-wrap:wrap}.toolbar>code{width:100%;order:3}.workbench pre{font-size:.76rem}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}</style>
