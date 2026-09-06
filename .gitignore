@@ -3,3 +3,7 @@ dist/
 .astro/
 .DS_Store
 *.log
+
+# Local temporary directories and Git worktrees (DEN-3956).
+tmp/
+temp/
